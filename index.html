@@ -1262,7 +1262,13 @@ function initArena3D() {
   renderer.outputColorSpace =
     THREE.SRGBColorSpace;
 
-  scene.add(
+  renderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+renderer.toneMappingExposure =
+    1.6;
+   
+scene.add(
     new THREE.AmbientLight(
       0x86cfff,
       .55

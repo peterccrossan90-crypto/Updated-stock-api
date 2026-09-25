@@ -72,6 +72,7 @@ const STOCKS = [
 ];
 
 let data = {};
+let macroData = {};
 let period = '1D';
 let soundOn = false;
 let liveMode = false;
@@ -204,7 +205,11 @@ function initialiseStocks() {
 
 async function fetchQuotes() {
 
-  const symbols = CONFIG.tracked.join(',');
+  const symbols = [
+  ...CONFIG.tracked,
+  ...CONFIG.indexes,
+  ...CONFIG.sectors
+].join(',');
 
   const url =
     `${CONFIG.workerUrl}?symbols=${encodeURIComponent(symbols)}`;
@@ -226,16 +231,21 @@ async function fetchQuotes() {
 
   let count = 0;
 
-  Object.entries(result.data).forEach(([symbol,q]) => {
+  macroData = {};
 
-    if (!data[symbol]) return;
+Object.entries(result.data).forEach(([symbol,q]) => {
 
-    if (q.error) {
-      console.warn(symbol, q.error);
-      return;
-    }
+  if (q.error) {
+    console.warn(symbol, q.error);
+    return;
+  }
 
-    const d = data[symbol];
+  if (!data[symbol]) {
+    macroData[symbol] = q;
+    return;
+  }
+
+  const d = data[symbol];
 
     d.price = safeNum(q.price);
     d.open = safeNum(q.open, d.price);
@@ -901,32 +911,27 @@ function sectorRow(n,v) {
 
 function sectors() {
 
-  const groups = {};
-
-  Object.values(data)
-    .filter(x => x.t)
-    .forEach(s => {
-
-      if (!groups[s.s]) {
-        groups[s.s] = [];
-      }
-
-      groups[s.s].push(s.c);
-
-    });
+  const map = [
+    ['XLK', 'Technology'],
+    ['XLC', 'Communication'],
+    ['XLY', 'Consumer Discretionary'],
+    ['XLI', 'Industrials'],
+    ['XLV', 'Health Care'],
+    ['XLE', 'Energy'],
+    ['XLF', 'Financials']
+  ];
 
   $('sectors').innerHTML =
-    Object.entries(groups)
-      .map(([name,values]) => {
+    map.map(([symbol,name]) => {
 
-        const avg =
-          values.reduce((a,b) => a+b,0)
-          / values.length;
+      const q = macroData[symbol];
 
-        return sectorRow(name,avg);
+      const move =
+        q ? safeNum(q.percentChange) : 0;
 
-      })
-      .join('');
+      return sectorRow(name, move);
+
+    }).join('');
 
 }
 
@@ -992,32 +997,44 @@ function radar() {
 function indexes() {
 
   const names = [
-    ['NASDAQ','—'],
-    ['S&P 500','—'],
-    ['DOW','—'],
-    ['VIX','—']
+    ['QQQ', 'NASDAQ-100'],
+    ['SPY', 'S&P 500'],
+    ['DIA', 'DOW'],
+    ['^VIX', 'VIX']
   ];
 
   $('indexes').innerHTML =
-    names.map(x => `
+    names.map(([symbol,name]) => {
 
-      <div class="index">
+      const q = macroData[symbol];
 
-        <div class="indexName">
-          ${x[0]}
+      const price =
+        q ? safeNum(q.price) : 0;
+
+      const move =
+        q ? safeNum(q.percentChange) : 0;
+
+      return `
+
+        <div class="index">
+
+          <div class="indexName">
+            ${name}
+          </div>
+
+          <div class="indexVal">
+            ${q ? price.toFixed(2) : '—'}
+          </div>
+
+          <div class="indexPct ${cls(move)}">
+            ${q ? pct(move) : '—'}
+          </div>
+
         </div>
 
-        <div class="indexVal">
-          ${x[1]}
-        </div>
+      `;
 
-        <div class="indexPct">
-          —
-        </div>
-
-      </div>
-
-    `).join('');
+    }).join('');
 
 }
 

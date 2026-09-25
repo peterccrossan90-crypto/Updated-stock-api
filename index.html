@@ -21,132 +21,1976 @@
 <div class="footer">PERSONAL MARKET VISUALIZER · NOT A TRADING SYSTEM · DATA MAY BE DELAYED DEPENDING ON PROVIDER PLAN</div></div>
 <div id="modalBack" class="modalBack"><div class="modal"><div class="modalTop"><div><div class="kicker" id="dt">NVDA</div><h2 id="dn" style="font-size:22px;margin:3px 0">NVIDIA</h2><div id="dm" class="sub">—</div></div><button id="close" style="border:1px solid var(--line);background:#0b1c29;color:var(--text);border-radius:9px;padding:8px 11px">Close</button></div><div id="chart" class="detailChart"></div><div id="ds" class="detailStats"></div><div id="de" class="note"></div></div></div>
 <script>
-/* =========================
-   DAILY MARKET RACE v5
-   Live data: Twelve Data
-   Add your key to TWELVE_DATA_API_KEY below.
-   ========================= */
+/* =========================================================
+   DAILY MARKET RACE
+   LIVE ENGINE: CLOUDFLARE WORKER → YAHOO FINANCE
+   ========================================================= */
 
-// ===================== 3D MARKET ARENA =====================
-let arena3d=null, arenaFrame=0;
-const arenaColor={NVDA:0x5de7ff,AVGO:0xa98bff,TSM:0xffd166,AMD:0xff5f73,MU:0x42f59b,VRT:0x6ee7ff,RKLB:0xff8a3d,NKE:0xffffff};
-function initArena3D(){
-  const canvas=document.getElementById('race3d'); if(!canvas || !window.THREE) return;
-  const scene=new THREE.Scene(); scene.fog=new THREE.FogExp2(0x03070b,.008);
-  const camera=new THREE.PerspectiveCamera(58,canvas.clientWidth/canvas.clientHeight,.1,5000); camera.position.set(0,42,82); camera.lookAt(0,0,-80);
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.8)); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false); renderer.outputColorSpace=THREE.SRGBColorSpace;
-  scene.add(new THREE.AmbientLight(0x86cfff,.55)); const key=new THREE.PointLight(0x5de7ff,2.2,700); key.position.set(0,45,40); scene.add(key);
-  const sun=new THREE.DirectionalLight(0xffffff,1.2); sun.position.set(0,80,30); scene.add(sun);
-  const track=new THREE.Mesh(new THREE.PlaneGeometry(210,420),new THREE.MeshStandardMaterial({color:0x07131c,metalness:.55,roughness:.48})); track.rotation.x=-Math.PI/2; track.position.set(0,-7,-115); scene.add(track);
-  const grid=new THREE.GridHelper(420,70,0x17465a,0x0b2532); grid.position.y=-6.8; grid.position.z=-105; scene.add(grid);
-  for(let i=-3;i<=3;i++){const line=new THREE.Mesh(new THREE.BoxGeometry(.12,.08,420),new THREE.MeshBasicMaterial({color:i===0?0x5de7ff:0x1b4256,transparent:true,opacity:i===0?.55:.35}));line.position.set(i*18,-6.7,-115);scene.add(line)}
-  const gateMat=new THREE.MeshStandardMaterial({color:0x123b4d,emissive:0x0a8fb5,emissiveIntensity:2,metalness:.7});
-  [-1,1].forEach(x=>{const post=new THREE.Mesh(new THREE.BoxGeometry(1.5,25,2),gateMat);post.position.set(x*82,5,-300);scene.add(post)});
-  const top=new THREE.Mesh(new THREE.BoxGeometry(165,2,2),gateMat);top.position.set(0,17,-300);scene.add(top);
-  const startGlow=new THREE.Mesh(new THREE.PlaneGeometry(165,1.2),new THREE.MeshBasicMaterial({color:0x5de7ff,transparent:true,opacity:.7}));startGlow.rotation.x=-Math.PI/2;startGlow.position.set(0,-6.65,25);scene.add(startGlow);
-  const stars=new THREE.BufferGeometry(), pts=[]; for(let i=0;i<700;i++) pts.push((Math.random()-.5)*600,Math.random()*260-10,-Math.random()*650); stars.setAttribute('position',new THREE.Float32BufferAttribute(pts,3)); scene.add(new THREE.Points(stars,new THREE.PointsMaterial({color:0x8bdfff,size:.7,transparent:true,opacity:.55})));
-  const racers={};
-  function makeRacer(t){const g=new THREE.Group(); const mat=new THREE.MeshStandardMaterial({color:arenaColor[t]||0xffffff,emissive:arenaColor[t]||0xffffff,emissiveIntensity:.55,metalness:.7,roughness:.25});
-    if(t==='RKLB'){const body=new THREE.Mesh(new THREE.ConeGeometry(2.8,9,16),mat);body.rotation.x=Math.PI/2;g.add(body);const glow=new THREE.Mesh(new THREE.SphereGeometry(1.4,12,12),new THREE.MeshBasicMaterial({color:0xff7b22,transparent:true,opacity:.75}));glow.position.z=5;g.add(glow)}
-    else if(t==='NKE'){const body=new THREE.Mesh(new THREE.CapsuleGeometry(2.3,5,6,12),mat);body.rotation.x=Math.PI/2;g.add(body)}
-    else {const body=new THREE.Mesh(new THREE.BoxGeometry(5,2.4,7),mat);body.position.y=1;g.add(body);const core=new THREE.Mesh(new THREE.SphereGeometry(1.5,16,16),new THREE.MeshBasicMaterial({color:arenaColor[t]||0xffffff}));core.position.y=2.4;g.add(core)}
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(3.8,0.12,8,32),new THREE.MeshBasicMaterial({color:arenaColor[t]||0xffffff,transparent:true,opacity:.45}));ring.rotation.x=Math.PI/2;ring.position.y=-1.8;g.add(ring);scene.add(g);return {g,ring};}
-  ['NVDA','AVGO','TSM','AMD','MU','VRT','RKLB','NKE'].forEach((t,i)=>racers[t]=makeRacer(t));
-  let drag=false,lastX=0,targetYaw=0,yaw=0; canvas.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX}); window.addEventListener('pointerup',()=>drag=false); canvas.addEventListener('pointermove',e=>{if(drag){targetYaw+=(e.clientX-lastX)*.004;lastX=e.clientX}});
-  function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)} window.addEventListener('resize',resize);
-  arena3d={scene,camera,renderer,racers,targetYaw,yaw};
-  document.getElementById('arenaStatus').textContent='3D ENGINE ONLINE';
-  function loop(){arenaFrame=requestAnimationFrame(loop); if(!arena3d)return; arena3d.yaw+=(arena3d.targetYaw-arena3d.yaw)*.08; camera.position.x=Math.sin(arena3d.yaw)*18; camera.position.z=82*Math.cos(arena3d.yaw)+10; camera.lookAt(0,0,-105); const ts=['NVDA','AVGO','TSM','AMD','MU','VRT','RKLB','NKE']; ts.forEach((t,i)=>{const r=arena3d.racers[t],s=data&&data[t]; const c=s?.c||0; const z=15-(clamp(c*7,-35,35)); r.g.position.set((i-3.5)*18,-4,z-95); r.g.rotation.z=Math.sin(performance.now()/700+i)*.025; r.ring.rotation.z+=.025+Math.abs(c)*.008; const sc=1+Math.min(Math.abs(c),10)/18; r.g.scale.setScalar(sc); if(t==='RKLB'){r.g.rotation.x=-.15-Math.max(c,0)*.025}}); renderer.render(scene,camera)} loop();
-}
-function updateArena3D(){if(!arena3d)return; const a=Object.values(data||{}).filter(x=>x.t); if(!a.length)return; const leader=[...a].sort((x,y)=>y.c-x.c)[0]; const avg=a.reduce((x,y)=>x+y.c,0)/a.length; const al=document.getElementById('arenaLeader'),aa=document.getElementById('arenaAvg'); if(al)al.textContent=leader?leader.t:'—'; if(aa){aa.textContent=pct(avg);aa.className=avg>=0?'up':'down'}}
-
-const CONFIG={
-  provider:'Twelve Data',
-  TWELVE_DATA_API_KEY:'e45d9e49a8194a9ebf6b4c2a6c6a6234',
-  refreshMs:360000,
-  marketTimeZone:'America/New_York',
-  tracked:['NVDA','AVGO','TSM','AMD','MU','VRT','RKLB','NKE'],
-  indexSymbols:[['NASDAQ','QQQ'],['S&P 500','SPY'],['DOW','DIA'],['VIX','VIX']],
-  sectorSymbols:[['Technology','XLK'],['Communication','XLC'],['Consumer Disc.','XLY'],['Industrials','XLI'],['Health Care','XLV'],['Energy','XLE'],['Financials','XLF']],
-  history:{'1D':{interval:'5min',outputsize:78},'1W':{interval:'1day',outputsize:7},'1M':{interval:'1day',outputsize:31},'3M':{interval:'1day',outputsize:65},'6M':{interval:'1day',outputsize:130},'1Y':{interval:'1day',outputsize:260}}
+const CONFIG = {
+  provider: 'Cloudflare Worker → Yahoo Finance',
+  workerUrl: 'https://stock-race-data.petercrossan1990.workers.dev/quotes',
+  refreshMs: 600000,
+  marketTimeZone: 'America/New_York',
+  tracked: ['NVDA','AVGO','TSM','AMD','MU','VRT','RKLB','NKE']
 };
-const STOCKS=[
- {t:'NVDA',n:'NVIDIA',v:'gpu',s:'Semiconductors'},
- {t:'AVGO',n:'Broadcom',v:'net',s:'Semiconductors'},
- {t:'TSM',n:'TSMC',v:'chip',s:'Semiconductors'},
- {t:'AMD',n:'AMD',v:'gpu',s:'Semiconductors'},
- {t:'MU',n:'Micron',v:'memory',s:'Semiconductors'},
- {t:'VRT',n:'Vertiv',v:'cool',s:'Data Centers'},
- {t:'RKLB',n:'Rocket Lab',v:'rocket',s:'Aerospace'},
- {t:'NKE',n:'Nike',v:'shoe',s:'Consumer'}
+
+const STOCKS = [
+  {t:'NVDA', n:'NVIDIA',      v:'gpu',    s:'Semiconductors'},
+  {t:'AVGO', n:'Broadcom',    v:'net',    s:'Semiconductors'},
+  {t:'TSM',  n:'TSMC',        v:'chip',   s:'Semiconductors'},
+  {t:'AMD',  n:'AMD',         v:'gpu',    s:'Semiconductors'},
+  {t:'MU',   n:'Micron',      v:'memory', s:'Semiconductors'},
+  {t:'VRT',  n:'Vertiv',      v:'cool',   s:'Data Centers'},
+  {t:'RKLB', n:'Rocket Lab',  v:'rocket', s:'Aerospace'},
+  {t:'NKE',  n:'Nike',        v:'shoe',   s:'Consumer'}
 ];
-const IDX=CONFIG.indexSymbols;let data={},period='1D',soundOn=false,liveMode=false,lastSessionKey=null,pollTimer=null,macroTimer=null,historyCache={};
-const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),pct=v=>(v>=0?'+':'')+Number(v||0).toFixed(2)+'%',cls=v=>v>0?'up':v<0?'down':'';
-function configured(){return CONFIG.TWELVE_DATA_API_KEY && !CONFIG.TWELVE_DATA_API_KEY.includes('PASTE_YOUR')}
-function apiUrl(path,params={}){let u=new URL('https://api.twelvedata.com/'+path);Object.entries({...params,apikey:CONFIG.TWELVE_DATA_API_KEY}).forEach(([k,v])=>u.searchParams.set(k,v));return u}
-function safeNum(v,f=0){let n=Number(v);return Number.isFinite(n)?n:f}
-function nyParts(){let p=new Intl.DateTimeFormat('en-US',{timeZone:CONFIG.marketTimeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());let o={};p.forEach(x=>o[x.type]=x.value);return o}
-function isWeekday(){let p=new Intl.DateTimeFormat('en-US',{timeZone:CONFIG.marketTimeZone,weekday:'short'}).format(new Date());return p!=='Sat'&&p!=='Sun'}
-function marketClockText(){let p=nyParts(),h=Number(p.hour),m=Number(p.minute),mins=h*60+m; if(!isWeekday())return 'MARKET CLOSED · WEEKEND'; if(mins<570)return `PRE-MARKET · OPENS ${String(570/60|0).padStart(2,'0')}:30 ET`; if(mins>=960)return 'MARKET CLOSED · AFTER HOURS'; return 'US MARKET · OPEN'}
-function sessionKeyFromQuote(q){return q?.datetime?String(q.datetime).slice(0,10):null}
-function seedDemo(){let seeds={NVDA:178.4,AVGO:358.1,TSM:281.2,AMD:163.7,MU:172.9,VRT:151.6,RKLB:42.8,NKE:65.4};data={};STOCKS.forEach((s,i)=>{let p=seeds[s.t];data[s.t]={...s,c:0,price:p,open:p,high:p,low:p,vol:0,hist:[0],spark:[0,0,0,0,0],live:false,previousClose:p}});liveMode=false;lastSessionKey=null;render();setState('DEMO MODE · ADD API KEY')}
-function setState(text){$('state').textContent=text}
-async function td(path,params={}){let r=await fetch(apiUrl(path,params));let j=await r.json();if(!r.ok||j.status==='error'||j.code){throw new Error(j.message||`API ${r.status}`)}return j}
-async function fetchQuotes(){
-  if(!configured())return false;
-  const symbols=CONFIG.tracked.join(',');
-  const j=await td('quote',{symbol:symbols});
-  let list=[];
-  if(j.symbol)list=[j]; else list=Object.values(j).filter(x=>x&&x.symbol);
-  if(!list.length)throw new Error('No quote data returned');
-  let marketOpen=false,session=null;
-  list.forEach(q=>{let s=data[q.symbol]||STOCKS.find(x=>x.t===q.symbol);if(!s)return;let price=safeNum(q.close),open=safeNum(q.open,price),high=safeNum(q.high,price),low=safeNum(q.low,price),vol=safeNum(q.volume),prev=safeNum(q.previous_close,price);let qSession=sessionKeyFromQuote(q);if(q.is_market_open)marketOpen=true;if(qSession)session=qSession;if(!data[q.symbol])data[q.symbol]={...s};let d=data[q.symbol];d.price=price;d.open=open;d.high=high;d.low=low;d.vol=vol;d.previousClose=prev;d.c=open?((price/open)-1)*100:0;d.apiChange=safeNum(q.percent_change,d.c);d.live=true;d.spark=[...(d.spark||[]),d.c].slice(-40);d.lastQuote=q.last_quote_at||q.timestamp||Date.now()/1000;});
-  liveMode=true;
-  if(marketOpen&&session&&session!==lastSessionKey){lastSessionKey=session;Object.values(data).forEach(d=>{d.hist=[d.c];d.spark=[d.c]});setState('LIVE · NEW TRADING DAY · 0% START LINE');}
-  else setState(marketOpen?'LIVE · MARKET OPEN':'LIVE · MARKET CLOSED');
+
+let data = {};
+let period = '1D';
+let soundOn = false;
+let liveMode = false;
+let demoMode = false;
+let pollTimer = null;
+let arena3d = null;
+let arenaFrame = 0;
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+const $ = id => document.getElementById(id);
+
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+const pct = v =>
+  (v >= 0 ? '+' : '') + Number(v || 0).toFixed(2) + '%';
+
+const cls = v =>
+  v > 0 ? 'up' : v < 0 ? 'down' : '';
+
+function safeNum(v, fallback=0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function formatVol(v) {
+  if (!v) return '—';
+  if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
+  if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v/1e3).toFixed(0) + 'K';
+  return String(Math.round(v));
+}
+
+/* =========================================================
+   NEW YORK MARKET TIME
+   ========================================================= */
+
+function nyParts() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: CONFIG.marketTimeZone,
+    year:'numeric',
+    month:'2-digit',
+    day:'2-digit',
+    hour:'2-digit',
+    minute:'2-digit',
+    hour12:false
+  }).formatToParts(new Date());
+
+  const o = {};
+  parts.forEach(x => o[x.type] = x.value);
+  return o;
+}
+
+function nyDateKey() {
+  const p = nyParts();
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+function isWeekday() {
+  const day = new Intl.DateTimeFormat('en-US', {
+    timeZone: CONFIG.marketTimeZone,
+    weekday:'short'
+  }).format(new Date());
+
+  return day !== 'Sat' && day !== 'Sun';
+}
+
+function marketClockText() {
+  const p = nyParts();
+  const h = Number(p.hour);
+  const m = Number(p.minute);
+  const mins = h * 60 + m;
+
+  if (!isWeekday()) {
+    return 'MARKET CLOSED · WEEKEND';
+  }
+
+  if (mins < 570) {
+    return 'PRE-MARKET · OPENS 09:30 ET';
+  }
+
+  if (mins >= 960) {
+    return 'MARKET CLOSED · AFTER HOURS';
+  }
+
+  return 'US MARKET · OPEN';
+}
+
+function marketIsOpen() {
+  const p = nyParts();
+  const mins = Number(p.hour) * 60 + Number(p.minute);
+
+  return isWeekday() && mins >= 570 && mins < 960;
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+function setState(text) {
+  const updated = $('updated');
+  if (updated) updated.textContent = text;
+}
+
+function initialiseStocks() {
+  data = {};
+
+  STOCKS.forEach(s => {
+    data[s.t] = {
+      ...s,
+      c: 0,
+      price: 0,
+      open: 0,
+      high: 0,
+      low: 0,
+      vol: 0,
+      previousClose: 0,
+      hist: [0],
+      spark: [0],
+      live: false
+    };
+  });
+}
+
+/* =========================================================
+   CLOUDFLARE WORKER
+   ========================================================= */
+
+async function fetchQuotes() {
+
+  const symbols = CONFIG.tracked.join(',');
+
+  const url =
+    `${CONFIG.workerUrl}?symbols=${encodeURIComponent(symbols)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Worker HTTP ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (!result || !result.ok || !result.data) {
+    throw new Error('Worker returned invalid data');
+  }
+
+  let count = 0;
+
+  Object.entries(result.data).forEach(([symbol,q]) => {
+
+    if (!data[symbol]) return;
+
+    if (q.error) {
+      console.warn(symbol, q.error);
+      return;
+    }
+
+    const d = data[symbol];
+
+    d.price = safeNum(q.price);
+    d.open = safeNum(q.open, d.price);
+    d.high = safeNum(q.high, d.price);
+    d.low = safeNum(q.low, d.price);
+    d.vol = safeNum(q.volume);
+    d.previousClose = safeNum(q.previousClose);
+    d.c = safeNum(
+      q.percentChange,
+      d.open ? ((d.price - d.open) / d.open) * 100 : 0
+    );
+
+    d.live = true;
+
+    d.spark = [
+      ...(d.spark || []),
+      d.c
+    ].slice(-40);
+
+    d.hist = d.spark;
+
+    count++;
+  });
+
+  if (!count) {
+    throw new Error('No live stock data returned');
+  }
+
+  liveMode = true;
+  demoMode = false;
+
+  const status = marketClockText();
+
+  setState(
+    marketIsOpen()
+      ? `● LIVE · ${count}/8 STOCKS`
+      : `LAST DATA · ${count}/8 STOCKS`
+  );
+
+  const updated = $('updated');
+
+  if (updated) {
+    updated.textContent =
+      `LIVE · ${new Date().toLocaleTimeString([], {
+        hour:'2-digit',
+        minute:'2-digit',
+        second:'2-digit'
+      })}`;
+  }
+
   return true;
 }
-async function fetchHistory(t,force=false){
-  if(!configured())return;
-  let key=t+'_'+period;if(!force&&historyCache[key]){data[t].history=historyCache[key];data[t].hist=historyCache[key].map(x=>x.change);data[t].spark=data[t].hist.slice(-40);return}
-  const cfg=CONFIG.history[period];
-  try{let j=await td('time_series',{symbol:t,interval:cfg.interval,outputsize:cfg.outputsize,order:'asc',timezone:'America/New_York'});let vals=(j.values||[]).map(v=>({date:v.datetime,price:safeNum(v.close),open:safeNum(v.open),high:safeNum(v.high),low:safeNum(v.low),volume:safeNum(v.volume)}));if(vals.length){let base=vals[0].price;let h=vals.map(v=>({...v,change:base?((v.price/base)-1)*100:0}));historyCache[key]=h;data[t].history=h;data[t].hist=h.map(x=>x.change);data[t].spark=data[t].hist.slice(-40)}}catch(e){console.warn('History',t,e.message)}
+
+/* =========================================================
+   EXPLICIT DEMO MODE
+   ========================================================= */
+
+function enterDemoMode() {
+
+  demoMode = true;
+  liveMode = false;
+
+  const seeds = {
+    NVDA:224,
+    AVGO:353,
+    TSM:451,
+    AMD:630,
+    MU:1083,
+    VRT:250,
+    RKLB:74,
+    NKE:36
+  };
+
+  STOCKS.forEach(s => {
+
+    const p = seeds[s.t];
+
+    data[s.t] = {
+      ...s,
+      c:0,
+      price:p,
+      open:p,
+      high:p,
+      low:p,
+      vol:0,
+      previousClose:p,
+      hist:[0],
+      spark:[0],
+      live:false
+    };
+
+  });
+
+  setState('DEMO MODE · SIMULATED DATA');
+
+  render();
 }
-async function loadHistoryForPeriod(){render();}
-async function liveRefresh(manual=false){
-  if(!configured()){seedDemo();return}
-  try{let ok=await fetchQuotes();if(ok){render();$('updated').textContent='LIVE '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});}else setState('LIVE DATA UNAVAILABLE')}
-  catch(e){console.error(e);setState('API ERROR · '+e.message.slice(0,46));if(manual)alert('Twelve Data error: '+e.message)}
+
+/* =========================================================
+   LIVE REFRESH
+   ========================================================= */
+
+async function liveRefresh(manual=false) {
+
+  if (demoMode) {
+    enterDemoMode();
+    return;
+  }
+
+  try {
+
+    await fetchQuotes();
+
+    render();
+
+  } catch(error) {
+
+    console.error('Market data error:', error);
+
+    setState(
+      `DATA ERROR · ${error.message.slice(0,38)}`
+    );
+
+    if (manual) {
+      alert(
+        'The live market-data connection returned an error:\n\n' +
+        error.message
+      );
+    }
+
+  }
 }
-function startLive(){if(!configured()){seedDemo();return}liveMode=true;liveRefresh(true);clearInterval(pollTimer);pollTimer=setInterval(()=>liveRefresh(false),CONFIG.refreshMs)}
-function resetDay(){if(!liveMode){seedDemo();return}lastSessionKey=null;Object.values(data).forEach(d=>{d.hist=[0];d.spark=[0];d.c=0});setState('LIVE · MANUAL RESET · WAITING FOR NEXT QUOTE');liveRefresh(true)}
-function simulate(){if(liveMode){liveRefresh(true);return}Object.values(data).forEach(d=>{let delta=(Math.random()-.43)*(d.t==='RKLB'?2:1.25);d.c=clamp(d.c+delta,-12,12);d.price=d.open*(1+d.c/100);d.high=Math.max(d.high,d.price);d.low=Math.min(d.low,d.price);d.hist.push(d.c);d.spark=[...d.spark,d.c].slice(-40)});setState('DEMO · SIMULATED MOVEMENT');render();if(soundOn)beep()}
-function spark(a,pos=true){let w=220,h=40,m=4,min=Math.min(...a),max=Math.max(...a),r=max-min||1,pts=a.map((v,i)=>`${m+i*(w-2*m)/(a.length-1||1)},${h-m-(v-min)/r*(h-2*m)}`).join(' ');return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${pos?'#43e58a':'#ff6474'}" stroke-width="2.5" stroke-linecap="round" points="${pts}"/></svg>`}
-function race(){let arr=Object.values(data).sort((a,b)=>b.c-a.c);$('lanes').innerHTML=arr.map(s=>{let left=clamp(50+s.c*4,3,97),m=Math.abs(s.c)>=8?'mega':Math.abs(s.c)>=4?'surge':'';return `<div class="lane"><div class="laneMeta"><div class="ticker">${s.t}</div><div class="company">${s.n}</div></div><div class="track">${[20,40,60,80].map(x=>`<i style="left:${x}%"></i>`).join('')}<div class="racer ${s.v} ${m}" style="left:${left}%">${s.v==='rocket'&&s.c>1?'<div class="exhaust"></div>':''}<div class="tail"></div><div class="body"></div><div class="core"></div></div></div><div class="move ${cls(s.c)}">${pct(s.c)}</div><div class="tag">${Math.abs(s.c)>=8?'MOMENTUM SURGE':Math.abs(s.c)>=4?'ACCELERATING':'TRACKING'}</div></div>`}).join('')}
-function indexes(){let ids=CONFIG.indexSymbols.map(x=>x[1]);let html=ids.map((id,i)=>{let d=data['__'+id]||{price:0,c:0};let x=CONFIG.indexSymbols[i];return `<div class="index"><div class="indexName">${x[0]}</div><div class="indexVal">${d.price?(x[0]==='VIX'?d.price.toFixed(1):d.price.toLocaleString(undefined,{maximumFractionDigits:2})):'—'}</div><div class="indexPct ${cls(d.c)}">${d.price?pct(d.c):'—'}</div></div>`}).join('');$('indexes').innerHTML=html}
-async function fetchIndexes(){if(!configured())return;try{let j=await td('quote',{symbol:CONFIG.indexSymbols.map(x=>x[1]).join(',')});let list=j.symbol?[j]:Object.values(j).filter(x=>x&&x.symbol);list.forEach(q=>{data['__'+q.symbol]={price:safeNum(q.close),c:safeNum(q.percent_change),open:safeNum(q.open),high:safeNum(q.high),low:safeNum(q.low)}});indexes()}catch(e){console.warn('Indexes',e.message)}}
-function stocks(){$('stocks').innerHTML=Object.values(data).filter(s=>s.t).map((s,i)=>{
-  let momentum=clamp(50+s.c*9,4,96),state=Math.abs(s.c)>=8?'SURGE':Math.abs(s.c)>=4?'ACCELERATING':s.c>0?'RISING':s.c<0?'FALLING':'FLAT';
-  return `<article class="stock" data-t="${s.t}"><div class="stockTop"><div class="stockName"><div class="avatar ${s.v}">${s.t.slice(0,2)}</div><div><div class="stockTicker">${s.t}</div><div class="stockCompany">${s.n}</div></div></div><div class="stockMove ${cls(s.c)}">${pct(s.c)}</div></div><div class="priceRow"><div class="price">$${s.price?s.price.toFixed(2):'—'}</div><div class="stockState ${cls(s.c)}">${state}</div></div><div class="spark">${spark(s.spark||[0],s.c>=0)}</div><div class="meter"><div class="meterLabel"><span>MOMENTUM</span><b>${state}</b></div><div class="meterTrack"><i style="width:${momentum}%"></i></div></div><div class="small statline"><span>OPEN <b>$${s.open?s.open.toFixed(2):'—'}</b></span><span>HIGH <b>$${s.high?s.high.toFixed(2):'—'}</b></span><span>LOW <b>$${s.low?s.low.toFixed(2):'—'}</b></span><span>VOL <b>${s.vol?formatVol(s.vol):'—'}</b></span></div></article>`}).join('');document.querySelectorAll('.stock').forEach(x=>x.onclick=()=>detail(x.dataset.t))}
-function formatVol(v){return v>=1e9?(v/1e9).toFixed(1)+'B':v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':String(Math.round(v))}
-function events(){let a=Object.values(data).filter(x=>x.t).sort((x,y)=>Math.abs(y.c)-Math.abs(x.c)),items=[];a.slice(0,4).forEach(s=>{if(Math.abs(s.c)>=1.5)items.push([s.c>0?'⚡':'⚠',`${s.t} ${s.c>0?'MOMENTUM':'DOWNSIDE'} MOVE`,`${s.n} is ${pct(s.c)} from today's open.`])});if(data.RKLB?.c>=2)items.unshift(['🚀','RKLB ROCKET BOOST',`Rocket acceleration is active at ${pct(data.RKLB.c)}.`]);if(!items.length)items=[['◉','MARKET WATCH',liveMode?'Live prices are being tracked.':'Demo market is waiting for live data.'],['⌁','RADAR ACTIVE','Relative momentum is being tracked across your watchlist.'],['↻','DAILY RESET READY','The race starts from 0% at the next regular US session.']];$('events').innerHTML=items.slice(0,5).map(e=>`<div class="event"><div class="eventIcon">${e[0]}</div><div><div class="eventTitle">${e[1]}</div><div class="eventText">${e[2]}</div></div><div class="eventTime">NOW</div></div>`).join('')}
-function leaders(){let a=Object.values(data).filter(x=>x.t),sorted=[...a].sort((x,y)=>y.c-x.c),best=sorted[0],worst=sorted[sorted.length-1],volatile=[...a].sort((x,y)=>Math.abs(y.c)-Math.abs(x.c))[0];$('bestTicker').textContent=best?.t||'—';$('bestMove').textContent=best?pct(best.c):'—';$('worstTicker').textContent=worst?.t||'—';$('worstMove').textContent=worst?pct(worst.c):'—';$('volatileTicker').textContent=volatile?.t||'—';$('volatileMove').textContent=volatile?pct(volatile.c):'—';$('leaderBadge').textContent=best?`#1 ${best.t}`:'AWAITING DATA'}
-function marketHero(){let p=nyParts(),clock=`${p.hour}:${p.minute}`,a=Object.values(data).filter(x=>x.t),avg=a.length?a.reduce((x,y)=>x+y.c,0)/a.length:0,up=a.filter(x=>x.c>0).length,down=a.filter(x=>x.c<0).length;$('marketClock').textContent=clock+' ET';$('marketStatus').textContent=marketClockText();$('breadth').textContent=`${up} UP · ${down} DOWN`;$('avgMove').textContent=pct(avg);$('avgMove').className=cls(avg)+' heroMetric';$('racePulse').style.width=clamp(50+avg*8,5,95)+'%';$('sessionDay').textContent=lastSessionKey||'NEXT SESSION';}
-function sectors(){if(!liveMode){let o={};Object.values(data).filter(x=>x.t).forEach(s=>(o[s.s]??=[]).push(s.c));$('sectors').innerHTML=Object.entries(o).map(([n,a])=>sectorRow(n,a.reduce((x,y)=>x+y,0)/a.length)).join('');return}let names=CONFIG.sectorSymbols.map(x=>x[0]);$('sectors').innerHTML=names.map(n=>sectorRow(n,0,true)).join('');}
-function sectorRow(n,v,missing=false){let w=clamp(Math.abs(v)*9,3,100);return `<div class="sector"><div class="sectorName">${n}</div><div class="sectorBar"><div class="sectorFill" style="width:${missing?3:w}%;background:${v>=0?'var(--green)':'var(--red)'}"></div></div><div class="sectorPct ${cls(v)}">${missing?'—':pct(v)}</div></div>`}
-async function fetchSectors(){if(!configured())return;try{let syms=CONFIG.sectorSymbols.map(x=>x[1]);let j=await td('quote',{symbol:syms.join(',')});let list=j.symbol?[j]:Object.values(j).filter(x=>x&&x.symbol);let m={};list.forEach(q=>m[q.symbol]=safeNum(q.percent_change));$('sectors').innerHTML=CONFIG.sectorSymbols.map(([n,s])=>sectorRow(n,m[s]??0,m[s]===undefined)).join('')}catch(e){console.warn('Sectors',e.message)}}
-function radar(){let box=$('radar');box.querySelectorAll('.node').forEach(n=>n.remove());let a=Object.values(data).filter(s=>s.t);a.forEach((s,i)=>{let n=document.createElement('div'),ang=Math.PI*2/a.length*i-Math.PI/2,rad=55+Math.abs(s.c)*7,x=50+Math.cos(ang)*rad/2.7,y=50+Math.sin(ang)*rad/2.7;n.className='node '+(s.c>=0?'up':'down');n.style.left=`calc(${x}% - 20px)`;n.style.top=`calc(${y}% - 20px)`;n.textContent=s.t;n.onclick=()=>detail(s.t);box.appendChild(n)})}
-function render(){race();indexes();stocks();events();sectors();radar();leaders();marketHero();updateArena3D();let a=Object.values(data).filter(x=>x.t);let l=[...a].sort((x,y)=>y.c-x.c)[0];$('gainers').textContent=a.filter(x=>x.c>0).length;$('losers').textContent=a.filter(x=>x.c<0).length;$('leader').textContent=l?.t||'—';$('best').textContent=l?pct(l.c):'—';$('updated').textContent=(liveMode?'LIVE ':'DEMO ')+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}
-function detail(t){let s=data[t];if(!s)return;let a=(period==='1D'&&s.hist?.length?s.hist:(s.history||[]).map(x=>x.change));if(!a.length)a=[0];let w=620,h=170,p=12,min=Math.min(...a),max=Math.max(...a),r=max-min||1,pts=a.map((v,i)=>`${p+i*(w-2*p)/(a.length-1||1)},${h-p-(v-min)/r*(h-2*p)}`).join(' ');$('dt').textContent=s.t;$('dn').textContent=s.n;$('dm').textContent=`$${s.price.toFixed(2)} · ${pct(s.c)} today`;$('dm').className='sub '+cls(s.c);$('chart').innerHTML=`<svg viewBox="0 0 ${w} ${h}"><polyline class="detailPath" points="${pts}"/></svg>`;$('ds').innerHTML=[['OPEN',s.open],['HIGH',s.high],['LOW',s.low],['VOLUME',formatVol(s.vol)],['PREV CLOSE',s.previousClose],['SESSION',lastSessionKey||'—']].map(x=>`<div class="detailStat"><span>${x[0]}</span><b>${typeof x[1]==='number'?('$'+x[1].toFixed(2)):x[1]}</b></div>`).join('');$('de').textContent=Math.abs(s.c)>=8?'MOMENTUM SURGE mode active.':Math.abs(s.c)>=4?'Acceleration mode active.':liveMode?'Live market tracking active.':'Demo tracking mode.';$('modalBack').classList.add('show')}
-function beep(){try{let C=AudioContext||webkitAudioContext,c=new C,o=c.createOscillator,g=c.createGain;o.frequency.value=520;g.gain.value=.025;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.08)}catch(e){}}
-$('move').textContent='↻ Refresh live data';$('move').onclick=()=>liveRefresh(true);$('reset').onclick=resetDay;$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊 Sound on':'🔇 Sound off'};$('close').onclick=()=>$('modalBack').classList.remove('show');$('modalBack').onclick=e=>{if(e.target.id==='modalBack')e.currentTarget.classList.remove('show')};$('dev').onclick=()=>{let x=$('devPanel');x.style.display=x.style.display==='none'?'block':'none'};document.querySelectorAll('#periods button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#periods button').forEach(x=>x.classList.remove('active'));b.classList.add('active');period=b.dataset.p;$('periodNote').textContent=period==='1D'?'LIVE INTRADAY':'PERIOD VIEW · OPEN A STOCK FOR ITS CHART';render()});
+
+/* =========================================================
+   POLLING
+   ========================================================= */
+
+function startPolling() {
+
+  clearInterval(pollTimer);
+
+  pollTimer = setInterval(() => {
+
+    /*
+      Poll during the US session.
+      Outside regular hours we don't hammer the Worker.
+    */
+
+    if (marketIsOpen()) {
+      liveRefresh(false);
+    }
+
+  }, CONFIG.refreshMs);
+}
+
+/* =========================================================
+   DAILY RESET
+   ========================================================= */
+
+let lastRaceDay = null;
+
+function checkDailyReset() {
+
+  const today = nyDateKey();
+
+  if (lastRaceDay === null) {
+    lastRaceDay = today;
+    return;
+  }
+
+  if (today !== lastRaceDay) {
+
+    lastRaceDay = today;
+
+    Object.values(data).forEach(d => {
+      d.hist = [0];
+      d.spark = [0];
+    });
+
+    console.log('Daily race reset:', today);
+  }
+}
+
+/* =========================================================
+   SPARKLINE
+   ========================================================= */
+
+function spark(a) {
+
+  if (!a || !a.length) a = [0];
+
+  const w = 220;
+  const h = 40;
+  const m = 4;
+
+  const min = Math.min(...a);
+  const max = Math.max(...a);
+  const range = max - min || 1;
+
+  const points = a.map((v,i) => {
+
+    const x =
+      m + i * (w - 2*m) / (a.length - 1 || 1);
+
+    const y =
+      h - m -
+      ((v - min) / range) * (h - 2*m);
+
+    return `${x},${y}`;
+
+  }).join(' ');
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}"
+         preserveAspectRatio="none">
+      <polyline
+        fill="none"
+        stroke="${a[a.length-1] >= 0 ? '#43e58a' : '#ff6474'}"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        points="${points}"
+      />
+    </svg>
+  `;
+}
+
+/* =========================================================
+   2D RACE
+   ========================================================= */
+
+function race() {
+
+  const arr = Object.values(data)
+    .filter(s => s.t)
+    .sort((a,b) => b.c - a.c);
+
+  $('lanes').innerHTML = arr.map(s => {
+
+    const left =
+      clamp(50 + s.c * 4, 3, 97);
+
+    const movement = Math.abs(s.c);
+
+    const mode =
+      movement >= 8
+        ? 'mega'
+        : movement >= 4
+          ? 'surge'
+          : '';
+
+    const tag =
+      movement >= 8
+        ? 'MOMENTUM SURGE'
+        : movement >= 4
+          ? 'ACCELERATING'
+          : 'TRACKING';
+
+    return `
+      <div class="lane">
+
+        <div class="laneMeta">
+          <div class="ticker">${s.t}</div>
+          <div class="company">${s.n}</div>
+        </div>
+
+        <div class="track">
+
+          ${[20,40,60,80]
+            .map(x => `<i style="left:${x}%"></i>`)
+            .join('')}
+
+          <div
+            class="racer ${s.v} ${mode}"
+            style="left:${left}%"
+          >
+
+            ${
+              s.v === 'rocket' && s.c > 1
+              ? '<div class="exhaust"></div>'
+              : ''
+            }
+
+            <div class="tail"></div>
+            <div class="body"></div>
+            <div class="core"></div>
+
+          </div>
+
+        </div>
+
+        <div class="move ${cls(s.c)}">
+          ${pct(s.c)}
+        </div>
+
+        <div class="tag">
+          ${tag}
+        </div>
+
+      </div>
+    `;
+
+  }).join('');
+}
+
+/* =========================================================
+   STOCK CARDS
+   ========================================================= */
+
+function stocks() {
+
+  $('stocks').innerHTML =
+    Object.values(data)
+      .filter(s => s.t)
+      .map(s => {
+
+        const momentum =
+          clamp(50 + s.c * 9, 4, 96);
+
+        const state =
+          Math.abs(s.c) >= 8
+            ? 'SURGE'
+            : Math.abs(s.c) >= 4
+              ? 'ACCELERATING'
+              : s.c > 0
+                ? 'RISING'
+                : s.c < 0
+                  ? 'FALLING'
+                  : 'FLAT';
+
+        return `
+          <article
+            class="stock"
+            data-t="${s.t}"
+          >
+
+            <div class="stockTop">
+
+              <div class="stockName">
+
+                <div class="avatar ${s.v}">
+                  ${s.t.slice(0,2)}
+                </div>
+
+                <div>
+                  <div class="stockTicker">
+                    ${s.t}
+                  </div>
+
+                  <div class="stockCompany">
+                    ${s.n}
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="stockMove ${cls(s.c)}">
+                ${pct(s.c)}
+              </div>
+
+            </div>
+
+            <div class="priceRow">
+
+              <div class="price">
+                ${s.price ? '$' + s.price.toFixed(2) : '—'}
+              </div>
+
+              <div class="stockState ${cls(s.c)}">
+                ${state}
+              </div>
+
+            </div>
+
+            <div class="spark">
+              ${spark(s.spark || [0])}
+            </div>
+
+            <div class="meter">
+
+              <div class="meterLabel">
+                <span>MOMENTUM</span>
+                <b>${state}</b>
+              </div>
+
+              <div class="meterTrack">
+                <i style="width:${momentum}%"></i>
+              </div>
+
+            </div>
+
+            <div class="small statline">
+
+              <span>
+                OPEN
+                <b>
+                  ${s.open ? '$' + s.open.toFixed(2) : '—'}
+                </b>
+              </span>
+
+              <span>
+                HIGH
+                <b>
+                  ${s.high ? '$' + s.high.toFixed(2) : '—'}
+                </b>
+              </span>
+
+              <span>
+                LOW
+                <b>
+                  ${s.low ? '$' + s.low.toFixed(2) : '—'}
+                </b>
+              </span>
+
+              <span>
+                VOL
+                <b>${formatVol(s.vol)}</b>
+              </span>
+
+            </div>
+
+          </article>
+        `;
+
+      })
+      .join('');
+
+  document
+    .querySelectorAll('.stock')
+    .forEach(x => {
+      x.onclick = () => detail(x.dataset.t);
+    });
+}
+
+/* =========================================================
+   LEADERS
+   ========================================================= */
+
+function leaders() {
+
+  const a =
+    Object.values(data).filter(x => x.t);
+
+  if (!a.length) return;
+
+  const sorted =
+    [...a].sort((x,y) => y.c - x.c);
+
+  const best = sorted[0];
+  const worst = sorted[sorted.length - 1];
+
+  const volatile =
+    [...a].sort(
+      (x,y) => Math.abs(y.c) - Math.abs(x.c)
+    )[0];
+
+  $('bestTicker').textContent =
+    best?.t || '—';
+
+  $('bestMove').textContent =
+    best ? pct(best.c) : '—';
+
+  $('worstTicker').textContent =
+    worst?.t || '—';
+
+  $('worstMove').textContent =
+    worst ? pct(worst.c) : '—';
+
+  $('volatileTicker').textContent =
+    volatile?.t || '—';
+
+  $('volatileMove').textContent =
+    volatile ? pct(volatile.c) : '—';
+
+  $('leaderBadge').textContent =
+    best ? `#1 ${best.t}` : 'AWAITING DATA';
+}
+
+/* =========================================================
+   MARKET HERO
+   ========================================================= */
+
+function marketHero() {
+
+  const p = nyParts();
+
+  const clock =
+    `${p.hour}:${p.minute}`;
+
+  const a =
+    Object.values(data).filter(x => x.t);
+
+  const avg =
+    a.length
+      ? a.reduce((x,y) => x + y.c, 0) / a.length
+      : 0;
+
+  const up =
+    a.filter(x => x.c > 0).length;
+
+  const down =
+    a.filter(x => x.c < 0).length;
+
+  $('marketClock').textContent =
+    clock + ' ET';
+
+  $('marketStatus').textContent =
+    marketClockText();
+
+  $('breadth').textContent =
+    `${up} UP · ${down} DOWN`;
+
+  $('avgMove').textContent =
+    pct(avg);
+
+  $('avgMove').className =
+    cls(avg) + ' heroMetric';
+
+  $('racePulse').style.width =
+    clamp(50 + avg * 8, 5, 95) + '%';
+
+  $('sessionDay').textContent =
+    nyDateKey();
+
+  $('arenaStatus').textContent =
+    marketIsOpen()
+      ? 'LIVE MARKET DATA'
+      : 'MARKET CLOSED · LAST DATA';
+}
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+
+function events() {
+
+  const a =
+    Object.values(data)
+      .filter(x => x.t)
+      .sort(
+        (x,y) =>
+          Math.abs(y.c) - Math.abs(x.c)
+      );
+
+  let items = [];
+
+  a.slice(0,4).forEach(s => {
+
+    if (Math.abs(s.c) >= 1.5) {
+
+      items.push([
+        s.c > 0 ? '⚡' : '⚠',
+        `${s.t} ${s.c > 0 ? 'MOMENTUM' : 'DOWNSIDE'} MOVE`,
+        `${s.n} is ${pct(s.c)} from today's open.`
+      ]);
+
+    }
+
+  });
+
+  if (data.RKLB?.c >= 2) {
+
+    items.unshift([
+      '🚀',
+      'RKLB ROCKET BOOST',
+      `Rocket acceleration is active at ${pct(data.RKLB.c)}.`
+    ]);
+
+  }
+
+  if (!items.length) {
+
+    items = [
+
+      [
+        '◉',
+        'MARKET WATCH',
+        liveMode
+          ? 'Live prices are being tracked.'
+          : 'Waiting for live market data.'
+      ],
+
+      [
+        '⌁',
+        'RADAR ACTIVE',
+        'Relative momentum is being tracked across your watchlist.'
+      ],
+
+      [
+        '↻',
+        'DAILY RESET READY',
+        'Every racer starts from 0% at the regular US session open.'
+      ]
+
+    ];
+
+  }
+
+  $('events').innerHTML =
+    items.slice(0,5).map(e => `
+
+      <div class="event">
+
+        <div class="eventIcon">
+          ${e[0]}
+        </div>
+
+        <div>
+          <div class="eventTitle">
+            ${e[1]}
+          </div>
+
+          <div class="eventText">
+            ${e[2]}
+          </div>
+        </div>
+
+        <div class="eventTime">
+          NOW
+        </div>
+
+      </div>
+
+    `).join('');
+}
+
+/* =========================================================
+   SECTORS
+   ========================================================= */
+
+function sectorRow(n,v) {
+
+  const w =
+    clamp(Math.abs(v) * 9, 3, 100);
+
+  return `
+    <div class="sector">
+
+      <div class="sectorName">
+        ${n}
+      </div>
+
+      <div class="sectorBar">
+
+        <div
+          class="sectorFill"
+          style="
+            width:${w}%;
+            background:${v >= 0
+              ? 'var(--green)'
+              : 'var(--red)'};
+          "
+        ></div>
+
+      </div>
+
+      <div class="sectorPct ${cls(v)}">
+        ${pct(v)}
+      </div>
+
+    </div>
+  `;
+}
+
+function sectors() {
+
+  const groups = {};
+
+  Object.values(data)
+    .filter(x => x.t)
+    .forEach(s => {
+
+      if (!groups[s.s]) {
+        groups[s.s] = [];
+      }
+
+      groups[s.s].push(s.c);
+
+    });
+
+  $('sectors').innerHTML =
+    Object.entries(groups)
+      .map(([name,values]) => {
+
+        const avg =
+          values.reduce((a,b) => a+b,0)
+          / values.length;
+
+        return sectorRow(name,avg);
+
+      })
+      .join('');
+
+}
+
+/* =========================================================
+   MARKET RADAR
+   ========================================================= */
+
+function radar() {
+
+  const box = $('radar');
+
+  box
+    .querySelectorAll('.node')
+    .forEach(n => n.remove());
+
+  const a =
+    Object.values(data)
+      .filter(s => s.t);
+
+  a.forEach((s,i) => {
+
+    const n =
+      document.createElement('div');
+
+    const angle =
+      Math.PI * 2 / a.length * i
+      - Math.PI / 2;
+
+    const radius =
+      55 + Math.abs(s.c) * 7;
+
+    const x =
+      50 + Math.cos(angle) * radius / 2.7;
+
+    const y =
+      50 + Math.sin(angle) * radius / 2.7;
+
+    n.className =
+      'node ' +
+      (s.c >= 0 ? 'up' : 'down');
+
+    n.style.left =
+      `calc(${x}% - 20px)`;
+
+    n.style.top =
+      `calc(${y}% - 20px)`;
+
+    n.textContent = s.t;
+
+    n.onclick =
+      () => detail(s.t);
+
+    box.appendChild(n);
+
+  });
+
+}
+
+/* =========================================================
+   INDEX PANEL
+   ========================================================= */
+
+function indexes() {
+
+  const names = [
+    ['NASDAQ','—'],
+    ['S&P 500','—'],
+    ['DOW','—'],
+    ['VIX','—']
+  ];
+
+  $('indexes').innerHTML =
+    names.map(x => `
+
+      <div class="index">
+
+        <div class="indexName">
+          ${x[0]}
+        </div>
+
+        <div class="indexVal">
+          ${x[1]}
+        </div>
+
+        <div class="indexPct">
+          —
+        </div>
+
+      </div>
+
+    `).join('');
+
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function render() {
+
+  race();
+  indexes();
+  stocks();
+  events();
+  sectors();
+  radar();
+  leaders();
+  marketHero();
+  updateArena3D();
+
+  const a =
+    Object.values(data)
+      .filter(x => x.t);
+
+  const leader =
+    [...a].sort((x,y) => y.c - x.c)[0];
+
+  $('gainers').textContent =
+    a.filter(x => x.c > 0).length;
+
+  $('losers').textContent =
+    a.filter(x => x.c < 0).length;
+
+  $('leader').textContent =
+    leader?.t || '—';
+
+  $('best').textContent =
+    leader ? pct(leader.c) : '—';
+
+  $('periodNote').textContent =
+    period === '1D'
+      ? 'LIVE INTRADAY'
+      : 'LIVE DATA · 1D ENGINE';
+
+}
+
+/* =========================================================
+   DETAIL MODAL
+   ========================================================= */
+
+function detail(t) {
+
+  const s = data[t];
+
+  if (!s) return;
+
+  const a =
+    s.spark?.length
+      ? s.spark
+      : [0];
+
+  const w = 620;
+  const h = 170;
+  const p = 12;
+
+  const min =
+    Math.min(...a);
+
+  const max =
+    Math.max(...a);
+
+  const range =
+    max - min || 1;
+
+  const points =
+    a.map((v,i) => {
+
+      const x =
+        p +
+        i * (w - 2*p)
+        / (a.length - 1 || 1);
+
+      const y =
+        h -
+        p -
+        ((v-min)/range)
+        * (h-2*p);
+
+      return `${x},${y}`;
+
+    }).join(' ');
+
+  $('dt').textContent =
+    s.t;
+
+  $('dn').textContent =
+    s.n;
+
+  $('dm').textContent =
+    `$${s.price.toFixed(2)} · ${pct(s.c)} today`;
+
+  $('dm').className =
+    'sub ' + cls(s.c);
+
+  $('chart').innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}">
+      <polyline
+        class="detailPath"
+        points="${points}"
+      />
+    </svg>
+  `;
+
+  $('ds').innerHTML = [
+
+    ['OPEN', s.open],
+    ['HIGH', s.high],
+    ['LOW', s.low],
+    ['VOLUME', formatVol(s.vol)],
+    ['PREV CLOSE',
+      s.previousClose || '—'],
+    ['SESSION',
+      nyDateKey()]
+
+  ].map(x => `
+
+    <div class="detailStat">
+
+      <span>${x[0]}</span>
+
+      <b>
+        ${
+          typeof x[1] === 'number'
+            ? '$' + x[1].toFixed(2)
+            : x[1]
+        }
+      </b>
+
+    </div>
+
+  `).join('');
+
+  $('de').textContent =
+    Math.abs(s.c) >= 8
+      ? 'MOMENTUM SURGE mode active.'
+      : Math.abs(s.c) >= 4
+        ? 'Acceleration mode active.'
+        : liveMode
+          ? 'Live market tracking active.'
+          : 'Waiting for live data.';
+
+  $('modalBack')
+    .classList
+    .add('show');
+}
+
+/* =========================================================
+   3D MARKET ARENA
+   ========================================================= */
+
+const arenaColor = {
+  NVDA:0x5de7ff,
+  AVGO:0xa98bff,
+  TSM:0xffd166,
+  AMD:0xff5f73,
+  MU:0x42f59b,
+  VRT:0x6ee7ff,
+  RKLB:0xff8a3d,
+  NKE:0xffffff
+};
+
+function initArena3D() {
+
+  const canvas =
+    document.getElementById('race3d');
+
+  if (!canvas || !window.THREE) return;
+
+  const scene =
+    new THREE.Scene();
+
+  scene.fog =
+    new THREE.FogExp2(
+      0x03070b,
+      .008
+    );
+
+  const camera =
+    new THREE.PerspectiveCamera(
+      58,
+      canvas.clientWidth /
+      canvas.clientHeight,
+      .1,
+      5000
+    );
+
+  camera.position.set(
+    0,
+    42,
+    82
+  );
+
+  camera.lookAt(
+    0,
+    0,
+    -80
+  );
+
+  const renderer =
+    new THREE.WebGLRenderer({
+      canvas,
+      antialias:true,
+      alpha:true
+    });
+
+  renderer.setPixelRatio(
+    Math.min(devicePixelRatio,1.8)
+  );
+
+  renderer.setSize(
+    canvas.clientWidth,
+    canvas.clientHeight,
+    false
+  );
+
+  renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+  scene.add(
+    new THREE.AmbientLight(
+      0x86cfff,
+      .55
+    )
+  );
+
+  const key =
+    new THREE.PointLight(
+      0x5de7ff,
+      2.2,
+      700
+    );
+
+  key.position.set(
+    0,
+    45,
+    40
+  );
+
+  scene.add(key);
+
+  const sun =
+    new THREE.DirectionalLight(
+      0xffffff,
+      1.2
+    );
+
+  sun.position.set(
+    0,
+    80,
+    30
+  );
+
+  scene.add(sun);
+
+  const track =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        210,
+        420
+      ),
+      new THREE.MeshStandardMaterial({
+        color:0x07131c,
+        metalness:.55,
+        roughness:.48
+      })
+    );
+
+  track.rotation.x =
+    -Math.PI / 2;
+
+  track.position.set(
+    0,
+    -7,
+    -115
+  );
+
+  scene.add(track);
+
+  const grid =
+    new THREE.GridHelper(
+      420,
+      70,
+      0x17465a,
+      0x0b2532
+    );
+
+  grid.position.y =
+    -6.8;
+
+  grid.position.z =
+    -105;
+
+  scene.add(grid);
+
+  for(let i=-3;i<=3;i++){
+
+    const line =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          .12,
+          .08,
+          420
+        ),
+        new THREE.MeshBasicMaterial({
+          color:
+            i === 0
+              ? 0x5de7ff
+              : 0x1b4256,
+          transparent:true,
+          opacity:
+            i === 0
+              ? .55
+              : .35
+        })
+      );
+
+    line.position.set(
+      i * 18,
+      -6.7,
+      -115
+    );
+
+    scene.add(line);
+
+  }
+
+  const gateMat =
+    new THREE.MeshStandardMaterial({
+      color:0x123b4d,
+      emissive:0x0a8fb5,
+      emissiveIntensity:2,
+      metalness:.7
+    });
+
+  [-1,1].forEach(x => {
+
+    const post =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          1.5,
+          25,
+          2
+        ),
+        gateMat
+      );
+
+    post.position.set(
+      x * 82,
+      5,
+      -300
+    );
+
+    scene.add(post);
+
+  });
+
+  const top =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        165,
+        2,
+        2
+      ),
+      gateMat
+    );
+
+  top.position.set(
+    0,
+    17,
+    -300
+  );
+
+  scene.add(top);
+
+  const startGlow =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        165,
+        1.2
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x5de7ff,
+        transparent:true,
+        opacity:.7
+      })
+    );
+
+  startGlow.rotation.x =
+    -Math.PI / 2;
+
+  startGlow.position.set(
+    0,
+    -6.65,
+    25
+  );
+
+  scene.add(startGlow);
+
+  const stars =
+    new THREE.BufferGeometry();
+
+  const pts = [];
+
+  for(let i=0;i<700;i++){
+
+    pts.push(
+      (Math.random()-.5)*600,
+      Math.random()*260-10,
+      -Math.random()*650
+    );
+
+  }
+
+  stars.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(
+      pts,
+      3
+    )
+  );
+
+  scene.add(
+    new THREE.Points(
+      stars,
+      new THREE.PointsMaterial({
+        color:0x8bdfff,
+        size:.7,
+        transparent:true,
+        opacity:.55
+      })
+    )
+  );
+
+  const racers = {};
+
+  function makeRacer(t){
+
+    const g =
+      new THREE.Group();
+
+    const mat =
+      new THREE.MeshStandardMaterial({
+        color:
+          arenaColor[t] || 0xffffff,
+        emissive:
+          arenaColor[t] || 0xffffff,
+        emissiveIntensity:.55,
+        metalness:.7,
+        roughness:.25
+      });
+
+    if(t === 'RKLB'){
+
+      const body =
+        new THREE.Mesh(
+          new THREE.ConeGeometry(
+            2.8,
+            9,
+            16
+          ),
+          mat
+        );
+
+      body.rotation.x =
+        Math.PI / 2;
+
+      g.add(body);
+
+      const glow =
+        new THREE.Mesh(
+          new THREE.SphereGeometry(
+            1.4,
+            12,
+            12
+          ),
+          new THREE.MeshBasicMaterial({
+            color:0xff7b22,
+            transparent:true,
+            opacity:.75
+          })
+        );
+
+      glow.position.z = 5;
+
+      g.add(glow);
+
+    } else if(t === 'NKE'){
+
+      const body =
+        new THREE.Mesh(
+          new THREE.CapsuleGeometry(
+            2.3,
+            5,
+            6,
+            12
+          ),
+          mat
+        );
+
+      body.rotation.x =
+        Math.PI / 2;
+
+      g.add(body);
+
+    } else {
+
+      const body =
+        new THREE.Mesh(
+          new THREE.BoxGeometry(
+            5,
+            2.4,
+            7
+          ),
+          mat
+        );
+
+      body.position.y = 1;
+
+      g.add(body);
+
+      const core =
+        new THREE.Mesh(
+          new THREE.SphereGeometry(
+            1.5,
+            16,
+            16
+          ),
+          new THREE.MeshBasicMaterial({
+            color:
+              arenaColor[t] || 0xffffff
+          })
+        );
+
+      core.position.y = 2.4;
+
+      g.add(core);
+
+    }
+
+    const ring =
+      new THREE.Mesh(
+        new THREE.TorusGeometry(
+          3.8,
+          .12,
+          8,
+          32
+        ),
+        new THREE.MeshBasicMaterial({
+          color:
+            arenaColor[t] || 0xffffff,
+          transparent:true,
+          opacity:.45
+        })
+      );
+
+    ring.rotation.x =
+      Math.PI / 2;
+
+    ring.position.y =
+      -1.8;
+
+    g.add(ring);
+
+    scene.add(g);
+
+    return {g,ring};
+
+  }
+
+  CONFIG.tracked.forEach(
+    t => racers[t] = makeRacer(t)
+  );
+
+  let drag = false;
+  let lastX = 0;
+  let targetYaw = 0;
+  let yaw = 0;
+
+  canvas.addEventListener(
+    'pointerdown',
+    e => {
+      drag = true;
+      lastX = e.clientX;
+    }
+  );
+
+  window.addEventListener(
+    'pointerup',
+    () => drag = false
+  );
+
+  canvas.addEventListener(
+    'pointermove',
+    e => {
+
+      if(drag){
+
+        targetYaw +=
+          (e.clientX - lastX) * .004;
+
+        lastX = e.clientX;
+
+      }
+
+    }
+  );
+
+  function resize(){
+
+    const w =
+      canvas.clientWidth;
+
+    const h =
+      canvas.clientHeight;
+
+    camera.aspect =
+      w / h;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+      w,
+      h,
+      false
+    );
+
+  }
+
+  window.addEventListener(
+    'resize',
+    resize
+  );
+
+  arena3d = {
+    scene,
+    camera,
+    renderer,
+    racers,
+    targetYaw,
+    yaw
+  };
+
+  $('arenaStatus').textContent =
+    '3D ENGINE ONLINE';
+
+  function loop(){
+
+    arenaFrame =
+      requestAnimationFrame(loop);
+
+    if(!arena3d) return;
+
+    arena3d.yaw +=
+      (arena3d.targetYaw -
+       arena3d.yaw) * .08;
+
+    camera.position.x =
+      Math.sin(arena3d.yaw) * 18;
+
+    camera.position.z =
+      82 *
+      Math.cos(arena3d.yaw)
+      + 10;
+
+    camera.lookAt(
+      0,
+      0,
+      -105
+    );
+
+    CONFIG.tracked.forEach(
+      (t,i) => {
+
+        const r =
+          arena3d.racers[t];
+
+        const s =
+          data[t];
+
+        const c =
+          s?.c || 0;
+
+        const z =
+          15 -
+          clamp(
+            c * 7,
+            -35,
+            35
+          );
+
+        r.g.position.set(
+          (i - 3.5) * 18,
+          -4,
+          z - 95
+        );
+
+        r.g.rotation.z =
+          Math.sin(
+            performance.now()/700+i
+          ) * .025;
+
+        r.ring.rotation.z +=
+          .025 +
+          Math.abs(c) * .008;
+
+        const scale =
+          1 +
+          Math.min(
+            Math.abs(c),
+            10
+          ) / 18;
+
+        r.g.scale.setScalar(
+          scale
+        );
+
+        if(t === 'RKLB'){
+
+          r.g.rotation.x =
+            -.15 -
+            Math.max(c,0) * .025;
+
+        }
+
+      }
+    );
+
+    renderer.render(
+      scene,
+      camera
+    );
+
+  }
+
+  loop();
+}
+
+/* =========================================================
+   3D HUD
+   ========================================================= */
+
+function updateArena3D(){
+
+  if(!arena3d) return;
+
+  const a =
+    Object.values(data)
+      .filter(x => x.t);
+
+  if(!a.length) return;
+
+  const leader =
+    [...a].sort(
+      (x,y) => y.c - x.c
+    )[0];
+
+  const avg =
+    a.reduce(
+      (x,y) => x + y.c,
+      0
+    ) / a.length;
+
+  if($('arenaLeader')){
+    $('arenaLeader').textContent =
+      leader ? leader.t : '—';
+  }
+
+  if($('arenaAvg')){
+
+    $('arenaAvg').textContent =
+      pct(avg);
+
+    $('arenaAvg').className =
+      avg >= 0 ? 'up' : 'down';
+
+  }
+
+}
+
+/* =========================================================
+   SOUND
+   ========================================================= */
+
+function beep(){
+
+  try {
+
+    const C =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+    const c = new C();
+
+    const o =
+      c.createOscillator();
+
+    const g =
+      c.createGain();
+
+    o.frequency.value =
+      520;
+
+    g.gain.value =
+      .025;
+
+    o.connect(g);
+
+    g.connect(c.destination);
+
+    o.start();
+
+    o.stop(
+      c.currentTime + .08
+    );
+
+  } catch(e) {}
+
+}
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+
+$('move').textContent =
+  '↻ Refresh live data';
+
+$('move').onclick =
+  () => liveRefresh(true);
+
+$('reset').onclick =
+  async () => {
+
+    Object.values(data)
+      .forEach(d => {
+
+        d.hist = [0];
+        d.spark = [0];
+        d.c = 0;
+
+      });
+
+    render();
+
+    await liveRefresh(true);
+
+  };
+
+$('sound').onclick =
+  () => {
+
+    soundOn =
+      !soundOn;
+
+    $('sound').textContent =
+      soundOn
+        ? '🔊 Sound on'
+        : '🔇 Sound off';
+
+  };
+
+$('close').onclick =
+  () =>
+    $('modalBack')
+      .classList
+      .remove('show');
+
+$('modalBack').onclick =
+  e => {
+
+    if(e.target.id === 'modalBack'){
+      e.currentTarget
+        .classList
+        .remove('show');
+    }
+
+  };
+
+$('dev').onclick =
+  () => {
+
+    const x =
+      $('devPanel');
+
+    x.style.display =
+      x.style.display === 'none'
+        ? 'block'
+        : 'none';
+
+  };
+
+document
+  .querySelectorAll('#periods button')
+  .forEach(b => {
+
+    b.onclick = () => {
+
+      document
+        .querySelectorAll(
+          '#periods button'
+        )
+        .forEach(x =>
+          x.classList.remove('active')
+        );
+
+      b.classList.add('active');
+
+      period =
+        b.dataset.p;
+
+      /*
+        The Worker currently supplies
+        real-time 1D data.
+        Historical periods remain
+        available in the UI and can
+        be connected later to a
+        historical data source.
+      */
+
+      $('periodNote').textContent =
+        period === '1D'
+          ? 'LIVE INTRADAY'
+          : 'PERIOD VIEW · LIVE ENGINE USES 1D DATA';
+
+      render();
+
+    };
+
+  });
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+
 async function boot(){
+
+  initialiseStocks();
+
   initArena3D();
-  $('devPanel').innerHTML=`<b>LIVE ENGINE</b><br>Provider: Twelve Data<br>Refresh: every ${CONFIG.refreshMs/60000} minutes during use.<br>Watchlist: ${CONFIG.tracked.join(' · ')}<br><br>Paste your Twelve Data key into <b>TWELVE_DATA_API_KEY</b> in this file. For a public GitHub Pages site, remember that a browser key is visible to visitors; a serverless proxy is the secure production architecture.`;
-  $('state').textContent=marketClockText();
-  if(!configured()){seedDemo();return}
-  liveMode=true;await liveRefresh(false);await Promise.allSettled([fetchIndexes(),fetchSectors()]);render();
-  clearInterval(pollTimer);clearInterval(macroTimer);pollTimer=setInterval(()=>liveRefresh(false),CONFIG.refreshMs);macroTimer=setInterval(async()=>{await Promise.allSettled([fetchIndexes(),fetchSectors()]);render()},1800000);
+
+  $('devPanel').innerHTML = `
+
+    <b>LIVE ENGINE</b><br>
+
+    Provider:
+    Cloudflare Worker → Yahoo Finance<br>
+
+    Worker:
+    ${CONFIG.workerUrl}<br>
+
+    Refresh:
+    every ${CONFIG.refreshMs/60000} minutes
+    during the US session.<br>
+
+    Watchlist:
+    ${CONFIG.tracked.join(' · ')}<br><br>
+
+    <b>DATA MODE</b><br>
+
+    Real intraday market data.
+    No automatic demo fallback.<br><br>
+
+    <b>RACE ENGINE</b><br>
+
+    Every racer starts at 0%.
+    Movement is calculated from
+    today's market open.
+  `;
+
+  lastRaceDay =
+    nyDateKey();
+
+  render();
+
+  await liveRefresh(false);
+
+  startPolling();
+
+  setInterval(
+    () => {
+
+      checkDailyReset();
+      marketHero();
+
+    },
+    30000
+  );
+
 }
+
+/* Start */
 boot();
+
 </script></body></html>

@@ -1,511 +1,1500 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Daily Market Race // Command Center</title><style>
-:root{--bg:#03070b;--panel:#08111a;--panel2:#0b1823;--line:#1c3343;--text:#edf7ff;--muted:#7f97aa;--green:#42f59b;--red:#ff5f73;--cyan:#5de7ff;--gold:#ffd166;--orange:#ff8a3d;--purple:#a98bff;--shadow:0 18px 60px #0008}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -15%,#153c55 0,#07121b 34%,#03070b 72%);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}.wrap{max-width:1380px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.kicker{font-size:10px;letter-spacing:2.4px;color:var(--cyan);font-weight:900}.title{font-size:34px;font-weight:950;letter-spacing:-1.5px}.sub,.small{color:var(--muted)}.sub{margin-top:2px}.pills{display:flex;gap:7px;flex-wrap:wrap}.pill{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#07131d;font-size:10px;font-weight:850}.api{color:var(--cyan)}.demo{color:var(--gold)}.card{background:linear-gradient(180deg,#0b1824ee,#061019f2);border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:var(--shadow);backdrop-filter:blur(10px)}.hero{margin-top:14px;padding:0;overflow:hidden}.heroTop{display:grid;grid-template-columns:1fr auto;gap:15px;padding:17px 18px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#0b1c29,#07131c)}.heroTitle{font-size:20px;font-weight:950}.heroMetrics{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.heroMetricBox{min-width:105px}.heroMetricLabel{font-size:8px;letter-spacing:1.2px;color:var(--muted);font-weight:900}.heroMetric{font-size:20px;font-weight:950}.green{color:var(--green)}.red{color:var(--red)}.heroClock{font-size:28px;font-weight:950;letter-spacing:1px}.statusLine{display:flex;gap:8px;align-items:center;font-size:10px;color:var(--muted)}.liveDot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.5s infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.7)}}.raceBanner{padding:11px 18px;background:#061019;display:flex;justify-content:space-between;gap:10px;align-items:center}.startLine{font-size:9px;color:var(--cyan);font-weight:900;letter-spacing:1px}.racePulse{height:3px;background:linear-gradient(90deg,var(--cyan),var(--green),var(--gold));width:50%;box-shadow:0 0 14px #5de7ff77;transition:width .8s}.raceScroll{overflow-x:auto}.race{position:relative;padding:4px 18px 10px;background:repeating-linear-gradient(0deg,#071019 0,#071019 72px,#0a1721 73px,#0a1721 74px);overflow:hidden}.lane{position:relative;height:72px;min-width:720px;border-bottom:1px dashed #203746}.lane:last-child{border:0}.laneMeta{position:absolute;left:0;top:9px;width:92px}.ticker{font-weight:950;letter-spacing:.4px}.company{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.track{position:absolute;left:105px;right:100px;top:0;bottom:0;border-left:2px solid var(--cyan);border-right:2px solid var(--gold);background:linear-gradient(90deg,#5de7ff09,#ffffff02,#ffd16609)}.track:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid #ffffff12}.track i{position:absolute;top:0;bottom:0;border-left:1px solid #ffffff0c}.racer{position:absolute;top:18px;width:58px;height:36px;transform:translateX(-50%);transition:left .9s cubic-bezier(.15,.8,.2,1);z-index:2;filter:drop-shadow(0 0 7px #5de7ff44)}.body{position:absolute;left:7px;right:4px;top:7px;height:21px;border-radius:10px;background:linear-gradient(135deg,#dceeff,#52738c);border:1px solid #dff5ff99}.core{position:absolute;right:10px;top:10px;width:14px;height:14px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan)}.tail{position:absolute;left:0;top:14px;width:20px;height:6px;background:var(--cyan);border-radius:8px}.rocket .body{clip-path:polygon(0 50%,22% 18%,76% 18%,100% 50%,76% 82%,22% 82%)}.rocket .core{background:var(--orange);box-shadow:0 0 20px var(--orange)}.rocket .tail{background:linear-gradient(90deg,transparent,var(--orange),var(--gold));width:30px}.gpu .body{border-radius:4px;background:linear-gradient(135deg,#79d8ff,#294b72)}.gpu .core{border-radius:4px;background:#7fffd4}.chip .body{border-radius:4px;background:linear-gradient(135deg,#f2c56b,#765b25)}.memory .body{border-radius:4px;background:linear-gradient(135deg,#baa0ff,#4b3b78)}.cool .body{background:linear-gradient(135deg,#d4fbff,#276276)}.net .body{background:linear-gradient(135deg,#c4d7ff,#405a9a)}.shoe .body{clip-path:polygon(0 65%,25% 30%,60% 30%,72% 50%,100% 65%,92% 85%,18% 85%)}.surge{animation:surge .65s infinite ease-in-out}.mega{animation:mega .4s infinite ease-in-out}@keyframes surge{50%{transform:translateX(-50%) scale(1.2)}}@keyframes mega{25%{transform:translateX(-50%) scale(1.38)}75%{transform:translateX(-50%) scale(1.08)}}.exhaust{position:absolute;left:-32px;top:14px;width:32px;height:8px;border-radius:8px;background:linear-gradient(90deg,transparent,var(--orange),var(--gold));animation:ex .22s infinite}@keyframes ex{50%{width:48px;opacity:.35}}.move{position:absolute;right:0;top:11px;font-weight:950;font-size:13px}.up{color:var(--green)}.down{color:var(--red)}.tag{position:absolute;right:0;bottom:8px;font-size:8px;color:var(--muted);letter-spacing:.8px;font-weight:900}.controls{display:flex;gap:7px;flex-wrap:wrap;padding:0 18px 16px}.controls button{border:1px solid var(--line);background:#0b1c29;color:var(--text);border-radius:10px;padding:8px 11px;min-height:40px;font-weight:800}.controls button.active,.primary{background:#14516e!important;border-color:#277d9e!important}.periods{display:flex;gap:4px}.periods button{min-width:42px;font-size:11px}.grid{display:grid;grid-template-columns:1.65fr 1fr;gap:13px;margin-top:13px}.grid3{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:13px;margin-top:13px}h2{font-size:11px;letter-spacing:1.5px;margin:0 0 10px;font-weight:950;color:#cfe7f5}.indexGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.index{background:#07131d;border:1px solid var(--line);border-radius:12px;padding:10px}.indexName{font-size:9px;color:var(--muted)}.indexVal{font-size:17px;font-weight:950}.indexPct{font-size:10px;font-weight:850}.leaders{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.leader{background:#07131d;border:1px solid var(--line);border-radius:12px;padding:10px}.leaderIcon{font-size:17px}.leaderLabel{font-size:8px;color:var(--muted);letter-spacing:1px;font-weight:900;margin-top:3px}.leaderTicker{font-size:17px;font-weight:950}.leaderMove{font-size:10px;font-weight:900}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.stock{background:linear-gradient(180deg,#091722,#071019);border:1px solid var(--line);border-radius:15px;padding:11px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}.stock:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 100% 0,#5de7ff08,transparent 45%);pointer-events:none}.stock:hover{border-color:#4d748e;transform:translateY(-2px)}.stockTop{display:flex;justify-content:space-between;gap:8px}.stockName{display:flex;gap:8px;align-items:center}.avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#173047,#0a1721);border:1px solid #2b475a;display:grid;place-items:center;font-size:9px;font-weight:950}.avatar.rocket{box-shadow:0 0 12px #ff8a3d33}.stockTicker{font-weight:950}.stockCompany{font-size:9px;color:var(--muted)}.stockMove{font-weight:950}.priceRow{display:flex;justify-content:space-between;align-items:end;margin-top:6px}.price{font-size:20px;font-weight:950}.stockState{font-size:8px;letter-spacing:1px;font-weight:950}.spark{height:44px;margin-top:5px}.spark svg{width:100%;height:100%}.meter{margin-top:3px}.meterLabel{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);font-weight:900}.meterLabel b{color:var(--text)}.meterTrack{height:6px;background:#0d202b;border-radius:99px;overflow:hidden;margin-top:4px}.meterTrack i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .7s}.statline{display:flex;gap:7px;justify-content:space-between;margin-top:8px;font-size:7px}.statline span{white-space:nowrap}.statline b{color:var(--text);font-size:8px}.events{display:grid;gap:7px}.event{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;background:#07131d;border:1px solid var(--line);border-radius:12px;padding:9px}.eventIcon{width:28px;height:28px;border-radius:8px;background:#122738;display:grid;place-items:center}.eventTitle{font-size:10px;font-weight:900}.eventText,.eventTime{font-size:8px;color:var(--muted)}.sectors{display:grid;gap:7px}.sector{display:grid;grid-template-columns:92px 1fr 46px;gap:7px;align-items:center}.sectorName,.sectorPct{font-size:10px;font-weight:850}.sectorBar{height:8px;background:#101e29;border-radius:99px;overflow:hidden}.sectorFill{height:100%;border-radius:99px}.radar{position:relative;height:300px;border:1px solid var(--line);border-radius:15px;background:radial-gradient(circle,#102b3d,#071019 68%);overflow:hidden}.radar:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px solid #5de7ff12}.radar:after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid #5de7ff12}.ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:1px solid #45607555;border-radius:50%}.r1{width:65px;height:65px}.r2{width:135px;height:135px}.r3{width:245px;height:245px}.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;display:grid;place-items:center;text-align:center;font-size:8px;font-weight:950;color:var(--cyan);background:#0c2230;border:1px solid #61e6ff66;box-shadow:0 0 25px #5de7ff22}.node{position:absolute;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#102333;border:1px solid #3a6178;font-size:9px;font-weight:950;transition:all .7s;z-index:2;cursor:pointer}.node.up{border-color:#43e58a99;box-shadow:0 0 16px #43e58a33}.node.down{border-color:#ff647499;box-shadow:0 0 16px #ff647433}.bottomGrid{display:grid;grid-template-columns:1.4fr 1fr;gap:13px;margin-top:13px}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.stat{background:#07131d;border:1px solid var(--line);border-radius:12px;padding:10px}.num{font-size:19px;font-weight:950}.modalBack{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:15px;z-index:10}.modalBack.show{display:flex}.modal{width:min(720px,100%);background:#08131d;border:1px solid #294355;border-radius:20px;padding:17px;box-shadow:0 30px 100px #000}.modalTop{display:flex;justify-content:space-between}.detailChart{height:200px;background:#061019;border:1px solid var(--line);border-radius:12px;margin-top:12px}.detailChart svg{width:100%;height:100%}.detailPath{fill:none;stroke:var(--cyan);stroke-width:3}.detailStats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.detailStat{padding:8px;background:#07131d;border:1px solid var(--line);border-radius:9px}.detailStat span{font-size:8px;color:var(--muted)}.detailStat b{display:block;font-size:11px;margin-top:2px}.footer{text-align:center;color:var(--muted);font-size:9px;padding:18px}.note{font-size:9px;color:var(--muted);margin-top:8px}@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid,.grid3,.bottomGrid{grid-template-columns:1fr}}@media(max-width:680px){.wrap{padding:10px}.title{font-size:26px}.heroTop{grid-template-columns:1fr}.indexGrid{grid-template-columns:repeat(2,1fr)}.leaders{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.detailStats{grid-template-columns:repeat(2,1fr)}.statline{font-size:6px}.statline b{font-size:7px}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style><style>
-/* 3D MARKET ARENA */
-.arena{margin-top:13px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 15%,#123a4f 0,#06121c 42%,#02060a 100%);min-height:560px;border:1px solid #1b4256;box-shadow:0 0 70px #00cfff12 inset,0 20px 80px #0009}
-.arenaTop{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:14px 16px;position:relative;z-index:4;background:linear-gradient(#07141fee,#07141e00)}
-.arenaTitle{font-size:12px;letter-spacing:2px;font-weight:950;color:var(--cyan)}
-.arenaSub{font-size:11px;color:var(--muted);margin-top:3px}.arenaBadge{border:1px solid #2c5264;background:#06131dcc;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:900}
-#race3d{display:block;width:100%;height:500px}.arenaOverlay{position:absolute;left:16px;bottom:14px;z-index:4;display:flex;gap:8px;flex-wrap:wrap}.hudChip{background:#06131dcc;border:1px solid #23485a;border-radius:10px;padding:8px 10px;backdrop-filter:blur(8px);font-size:10px}.hudChip b{color:var(--text)}
-.arenaHint{position:absolute;right:16px;bottom:14px;z-index:4;color:#8ba5b5;font-size:10px;text-align:right}.scanline{position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 49.8%,#5de7ff08 50%,transparent 50.2%);background-size:100% 8px;z-index:3;mix-blend-mode:screen}
-@media(max-width:700px){.arena{min-height:470px}.arenaTop{padding:12px}.arenaTitle{font-size:10px}.arenaHint{display:none}#race3d{height:410px}.arenaOverlay{left:10px;bottom:10px}}
-</style><script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script></head><body><div class="wrap">
-<header class="top"><div><div class="kicker">STOCK MARKET // COMMAND CENTER</div><div class="title">DAILY MARKET RACE</div><div class="sub">Real market movement, turned into a visual race.</div></div><div class="pills"><div class="pill api">● TWELVE DATA ENGINE</div><div class="pill demo">DEMO FALLBACK</div><div id="updated" class="pill">UPDATED —</div></div></header>
-<section class="card hero"><div class="heroTop"><div><div class="heroTitle">🏁 MARKET RACE // <span id="sessionDay">NEXT SESSION</span></div><div class="statusLine"><span class="liveDot"></span><span id="marketStatus">CHECKING US MARKET</span><span>·</span><span id="breadth">— UP · — DOWN</span></div><div class="note">Every racer starts at the 0% line. Speed is driven by the stock's move from today's open.</div></div><div class="heroMetrics"><div class="heroMetricBox"><div class="heroMetricLabel">NEW YORK TIME</div><div id="marketClock" class="heroClock">--:-- ET</div></div><div class="heroMetricBox"><div class="heroMetricLabel">WATCHLIST AVG</div><div id="avgMove" class="heroMetric">0.00%</div></div><div class="heroMetricBox"><div class="heroMetricLabel">LEADER</div><div id="leaderBadge" class="heroMetric">AWAITING</div></div></div></div><div class="raceBanner"><span class="startLine">START 0.00%</span><div class="racePulse" id="racePulse"></div><span class="startLine">FINISH</span></div><div class="raceScroll"><div class="race"><div id="lanes"></div></div></div><div class="controls"><div class="periods" id="periods"><button class="active" data-p="1D">1D</button><button data-p="1W">1W</button><button data-p="1M">1M</button><button data-p="3M">3M</button><button data-p="6M">6M</button><button data-p="1Y">1Y</button></div><button class="primary" id="move">↻ Refresh live data</button><button id="reset">↺ Reset day</button><button id="sound">🔇 Sound off</button></div></section>
-<section class="card arena" id="arenaWrap"><div class="arenaTop"><div><div class="arenaTitle">3D MARKET ARENA // LIVE RACE</div><div class="arenaSub">Actual intraday movement controls acceleration. Tap a stock below to inspect it.</div></div><div id="arenaStatus" class="arenaBadge">INITIALISING 3D ENGINE</div></div><canvas id="race3d"></canvas><div class="scanline"></div><div class="arenaOverlay"><div class="hudChip">LEADER <b id="arenaLeader">—</b></div><div class="hudChip">AVG MOVE <b id="arenaAvg">0.00%</b></div><div class="hudChip">FIELD <b>8 MACHINES</b></div></div><div class="arenaHint">DRAG / SWIPE TO LOOK AROUND<br>3D VIEW · LIVE MARKET ENGINE</div></section>
-<section class="grid"><div class="card"><h2>MARKET PULSE</h2><div id="indexes" class="indexGrid"></div></div><div class="card"><h2>WHO'S HAVING A DAY?</h2><div class="leaders"><div class="leader"><div class="leaderIcon">🔥</div><div class="leaderLabel">BIGGEST MOVE</div><div id="bestTicker" class="leaderTicker">—</div><div id="bestMove" class="leaderMove">—</div></div><div class="leader"><div class="leaderIcon">🧊</div><div class="leaderLabel">BIGGEST DROP</div><div id="worstTicker" class="leaderTicker">—</div><div id="worstMove" class="leaderMove">—</div></div><div class="leader"><div class="leaderIcon">💥</div><div class="leaderLabel">MOST VOLATILE</div><div id="volatileTicker" class="leaderTicker">—</div><div id="volatileMove" class="leaderMove">—</div></div></div></div></section>
-<section class="card" style="margin-top:13px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:end"><div><h2>WATCHLIST // LIVE MACHINES</h2><div class="small">Tap any stock to zoom into its data. The visuals react to the movement.</div></div><div id="periodNote" class="small">LIVE INTRADAY</div></div><div id="stocks" class="cards" style="margin-top:11px"></div></section>
-<section class="grid3"><div class="card"><h2>MARKET RADAR</h2><div id="radar" class="radar"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="center">MARKET<br>CORE</div></div></div><div class="card"><h2>LIVE MARKET EVENTS</h2><div id="events" class="events"></div></div><div class="card"><h2>SECTOR THRUST</h2><div id="sectors" class="sectors"></div><div class="note">Sector figures use ETF proxies when live data is available.</div></div></section>
-<section class="bottomGrid"><div class="card"><h2>SESSION SNAPSHOT</h2><div class="stats"><div class="stat"><div class="small">GAINERS</div><div id="gainers" class="num">—</div></div><div class="stat"><div class="small">LOSERS</div><div id="losers" class="num">—</div></div><div class="stat"><div class="small">LEADER</div><div id="leader" class="num">—</div></div><div class="stat"><div class="small">LEADER MOVE</div><div id="best" class="num">—</div></div></div></div><div class="card"><h2>DATA ENGINE</h2><div class="small">Quotes are batched and polled during the US session. Macro panels refresh less often to protect the free API allowance.</div><button id="dev" style="margin-top:10px;border:1px solid var(--line);background:#0b1c29;color:var(--text);border-radius:9px;padding:8px 11px;font-weight:800">Show engine status</button><div id="devPanel" class="note" style="display:none"></div></div></section>
-<div class="footer">PERSONAL MARKET VISUALIZER · NOT A TRADING SYSTEM · DATA MAY BE DELAYED DEPENDING ON PROVIDER PLAN</div></div>
-<div id="modalBack" class="modalBack"><div class="modal"><div class="modalTop"><div><div class="kicker" id="dt">NVDA</div><h2 id="dn" style="font-size:22px;margin:3px 0">NVIDIA</h2><div id="dm" class="sub">—</div></div><button id="close" style="border:1px solid var(--line);background:#0b1c29;color:var(--text);border-radius:9px;padding:8px 11px">Close</button></div><div id="chart" class="detailChart"></div><div id="ds" class="detailStats"></div><div id="de" class="note"></div></div></div>
-<script>
-/* =========================================================
-   DAILY MARKET RACE
-   LIVE ENGINE: CLOUDFLARE WORKER → YAHOO FINANCE
-   ========================================================= */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Stock Race</title>
 
+<style>
+:root{
+  --bg:#05070b;
+  --panel:#0a0e15;
+  --panel2:#0e131d;
+  --border:#1c2635;
+  --text:#eef4ff;
+  --muted:#718096;
+  --green:#36f39a;
+  --red:#ff4d67;
+  --cyan:#35d9ff;
+  --yellow:#ffd166;
+  --purple:#a879ff;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,Arial,Helvetica,sans-serif;
+}
+
+body{
+  overflow-x:hidden;
+}
+
+button{
+  font:inherit;
+}
+
+.topbar{
+  min-height:72px;
+  border-bottom:1px solid var(--border);
+  background:#070a10;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:12px 22px;
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.brandMark{
+  width:38px;
+  height:38px;
+  border:1px solid #27435a;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  color:var(--cyan);
+  font-weight:900;
+  box-shadow:0 0 22px rgba(53,217,255,.12);
+}
+
+.brandText{
+  min-width:0;
+}
+
+.brandTitle{
+  font-size:16px;
+  font-weight:900;
+  letter-spacing:.14em;
+  white-space:nowrap;
+}
+
+.brandSub{
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:.12em;
+  margin-top:3px;
+}
+
+.topPills{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.pill{
+  border:1px solid var(--border);
+  background:#0b1018;
+  color:#9eabbf;
+  padding:7px 10px;
+  border-radius:999px;
+  font-size:10px;
+  letter-spacing:.08em;
+  white-space:nowrap;
+}
+
+.pill.live{
+  color:var(--green);
+  border-color:#174f3c;
+}
+
+.pill.api{
+  color:var(--cyan);
+  border-color:#16485a;
+}
+
+.layout{
+  max-width:1500px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.hero{
+  display:grid;
+  grid-template-columns:1.4fr 1fr;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.heroPanel{
+  background:linear-gradient(145deg,#0c111a,#080b11);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+  min-height:126px;
+}
+
+.heroLabel{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.heroValue{
+  font-size:34px;
+  font-weight:900;
+  margin-top:8px;
+  letter-spacing:-.04em;
+}
+
+.heroSmall{
+  color:#8d9bb0;
+  font-size:11px;
+  margin-top:7px;
+}
+
+.heroStats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.stat{
+  background:#080c13;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:11px;
+}
+
+.statLabel{
+  color:var(--muted);
+  font-size:9px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.statValue{
+  margin-top:6px;
+  font-weight:800;
+  font-size:16px;
+}
+
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+.periods{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.period{
+  border:1px solid var(--border);
+  background:#0a0f17;
+  color:#77869a;
+  border-radius:8px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:11px;
+  font-weight:800;
+}
+
+.period:hover,
+.period.active{
+  color:#fff;
+  border-color:#2e7185;
+  background:#0c1a22;
+}
+
+.controlRight{
+  display:flex;
+  gap:7px;
+  align-items:center;
+}
+
+.controlBtn{
+  border:1px solid var(--border);
+  background:#0a0f17;
+  color:#9ba8ba;
+  border-radius:8px;
+  padding:8px 11px;
+  cursor:pointer;
+  font-size:11px;
+}
+
+.controlBtn:hover{
+  color:#fff;
+  border-color:#35516c;
+}
+
+.dashboardGrid{
+  display:grid;
+  grid-template-columns:1.6fr .9fr;
+  gap:14px;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.panelHead{
+  min-height:48px;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.panelTitle{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.panelMeta{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.arenaPanel{
+  grid-column:1 / -1;
+}
+
+.arenaWrap{
+  position:relative;
+  min-height:560px;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(35,94,122,.11),transparent 36%),
+    linear-gradient(180deg,#05080d,#030508);
+}
+
+#race3d{
+  width:100%;
+  height:560px;
+  display:block;
+}
+
+.arenaOverlay{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.arenaTop{
+  display:flex;
+  justify-content:space-between;
+  padding:15px;
+}
+
+.arenaBadge{
+  background:rgba(5,8,13,.78);
+  border:1px solid #1c2d3b;
+  padding:8px 10px;
+  border-radius:8px;
+  font-size:10px;
+  color:#91a4b8;
+  backdrop-filter:blur(8px);
+}
+
+.arenaBadge strong{
+  color:#fff;
+}
+
+.arenaBottom{
+  position:absolute;
+  left:15px;
+  right:15px;
+  bottom:14px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:end;
+}
+
+.arenaLeader{
+  font-size:24px;
+  font-weight:900;
+}
+
+.arenaAvg{
+  color:#8b9aad;
+  font-size:10px;
+  text-align:right;
+}
+
+.columns{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:14px;
+}
+
+.list{
+  padding:8px;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:44px 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:10px 8px;
+  border-bottom:1px solid #111824;
+}
+
+.row:last-child{
+  border-bottom:0;
+}
+
+.rank{
+  color:#506077;
+  font-size:10px;
+  font-weight:900;
+}
+
+.ticker{
+  font-size:12px;
+  font-weight:900;
+}
+
+.name{
+  color:#657388;
+  font-size:9px;
+  margin-top:3px;
+}
+
+.move{
+  font-size:12px;
+  font-weight:900;
+  text-align:right;
+}
+
+.price{
+  color:#8c9aab;
+  font-size:9px;
+  margin-top:3px;
+  text-align:right;
+}
+
+.pos{
+  color:var(--green);
+}
+
+.neg{
+  color:var(--red);
+}
+
+.flat{
+  color:#8793a4;
+}
+
+.indexGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  padding:10px;
+}
+
+.indexCard{
+  background:#080c13;
+  border:1px solid #141c28;
+  border-radius:9px;
+  padding:11px;
+}
+
+.indexName{
+  font-size:9px;
+  color:#6f7e92;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.indexPrice{
+  font-size:15px;
+  font-weight:900;
+  margin-top:7px;
+}
+
+.indexMove{
+  font-size:10px;
+  margin-top:4px;
+  font-weight:800;
+}
+
+.sectorList{
+  padding:8px 12px 12px;
+}
+
+.sectorRow{
+  padding:10px 0;
+  border-bottom:1px solid #121923;
+}
+
+.sectorRow:last-child{
+  border-bottom:0;
+}
+
+.sectorTop{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  font-size:10px;
+}
+
+.sectorName{
+  color:#b8c3d2;
+  font-weight:700;
+}
+
+.sectorPct{
+  font-weight:900;
+}
+
+.bar{
+  height:4px;
+  margin-top:7px;
+  background:#101722;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.barFill{
+  height:100%;
+  border-radius:999px;
+  background:#3b7084;
+  min-width:2px;
+}
+
+.barFill.negative{
+  background:#7b3343;
+}
+
+.eventList{
+  padding:8px 12px 12px;
+}
+
+.event{
+  padding:10px 0;
+  border-bottom:1px solid #121923;
+}
+
+.event:last-child{
+  border-bottom:0;
+}
+
+.eventTime{
+  color:#526278;
+  font-size:9px;
+}
+
+.eventText{
+  font-size:10px;
+  color:#aab5c4;
+  margin-top:4px;
+}
+
+.statsGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  padding:10px;
+}
+
+.statCard{
+  background:#080c13;
+  border:1px solid #141c28;
+  border-radius:9px;
+  padding:11px;
+}
+
+.statCardLabel{
+  color:#657388;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+
+.statCardValue{
+  font-size:15px;
+  font-weight:900;
+  margin-top:6px;
+}
+
+.footer{
+  color:#4e5b6e;
+  text-align:center;
+  padding:22px 0 30px;
+  font-size:9px;
+  letter-spacing:.06em;
+}
+
+.modalBack{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(6px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  padding:20px;
+}
+
+.modalBack.show{
+  display:flex;
+}
+
+.modal{
+  width:min(680px,100%);
+  background:#090e16;
+  border:1px solid #253245;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 25px 80px rgba(0,0,0,.55);
+}
+
+.modalHead{
+  padding:16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.modalTitle{
+  font-size:17px;
+  font-weight:900;
+}
+
+.close{
+  border:1px solid var(--border);
+  background:#0c1119;
+  color:#8794a7;
+  width:34px;
+  height:34px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.modalBody{
+  padding:16px;
+}
+
+.detailGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:15px;
+}
+
+.detail{
+  background:#070b12;
+  border:1px solid #141d29;
+  border-radius:9px;
+  padding:11px;
+}
+
+.detailLabel{
+  color:#617086;
+  font-size:9px;
+}
+
+.detailValue{
+  font-size:15px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+#chart{
+  width:100%;
+  height:180px;
+  display:block;
+  background:#070b11;
+  border:1px solid #141d29;
+  border-radius:9px;
+}
+
+.empty{
+  color:#59677a;
+  text-align:center;
+  padding:25px 10px;
+  font-size:10px;
+}
+
+.dev{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  z-index:80;
+}
+
+.dev button{
+  background:#0b1119;
+  color:#617084;
+  border:1px solid #1c2735;
+  border-radius:7px;
+  padding:6px 8px;
+  font-size:9px;
+  cursor:pointer;
+}
+
+.devPanel{
+  display:none;
+  position:absolute;
+  right:0;
+  bottom:35px;
+  width:290px;
+  background:#080d14;
+  border:1px solid #243044;
+  border-radius:9px;
+  padding:12px;
+  font-family:monospace;
+  font-size:9px;
+  color:#7f91a8;
+}
+
+.devPanel.show{
+  display:block;
+}
+
+@media(max-width:1050px){
+  .dashboardGrid{
+    grid-template-columns:1fr;
+  }
+
+  .arenaPanel{
+    grid-column:auto;
+  }
+
+  .hero{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:700px){
+  .topbar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .topPills{
+    justify-content:flex-start;
+  }
+
+  .heroStats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .columns{
+    grid-template-columns:1fr;
+  }
+
+  .indexGrid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .statsGrid{
+    grid-template-columns:1fr;
+  }
+
+  .arenaWrap,
+  #race3d{
+    min-height:420px;
+    height:420px;
+  }
+
+  .heroValue{
+    font-size:27px;
+  }
+
+  .brandTitle{
+    font-size:13px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brandMark">R</div>
+    <div class="brandText">
+      <div class="brandTitle">3D STOCK RACE</div>
+      <div class="brandSub">LIVE MARKET INTELLIGENCE</div>
+    </div>
+  </div>
+
+  <div class="topPills">
+    <div class="pill api">● CLOUDFLARE → YAHOO</div>
+    <div class="pill live">● LIVE DATA</div>
+    <div class="pill">US MARKET</div>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="hero">
+
+    <div class="heroPanel">
+      <div class="heroLabel">Market session</div>
+      <div class="heroValue" id="sessionDay">--</div>
+      <div class="heroSmall" id="marketStatus">Connecting to market data...</div>
+    </div>
+
+    <div class="heroPanel">
+      <div class="heroStats">
+
+        <div class="stat">
+          <div class="statLabel">Breadth</div>
+          <div class="statValue" id="breadth">--</div>
+        </div>
+
+        <div class="stat">
+          <div class="statLabel">Average move</div>
+          <div class="statValue" id="avgMove">--</div>
+        </div>
+
+        <div class="stat">
+          <div class="statLabel">Leader</div>
+          <div class="statValue" id="leaderBadge">--</div>
+        </div>
+
+        <div class="stat">
+          <div class="statLabel">Updated</div>
+          <div class="statValue" id="updated">--</div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <section class="controls">
+
+    <div class="periods" id="periods">
+      <button class="period active" data-period="1D">1D</button>
+      <button class="period" data-period="1W">1W</button>
+      <button class="period" data-period="1M">1M</button>
+      <button class="period" data-period="3M">3M</button>
+      <button class="period" data-period="6M">6M</button>
+      <button class="period" data-period="1Y">1Y</button>
+    </div>
+
+    <div class="controlRight">
+      <button class="controlBtn" id="move">LIVE</button>
+      <button class="controlBtn" id="reset">RESET VIEW</button>
+      <button class="controlBtn" id="sound">SOUND OFF</button>
+    </div>
+
+  </section>
+
+  <div class="dashboardGrid">
+
+    <section class="panel arenaPanel">
+
+      <div class="panelHead">
+        <div>
+          <div class="panelTitle">Market Race</div>
+          <div class="panelMeta" id="arenaStatus">Waiting for live market data</div>
+        </div>
+
+        <div class="panelMeta">Movement = intraday % from open</div>
+      </div>
+
+      <div class="arenaWrap">
+
+        <canvas id="race3d"></canvas>
+
+        <div class="arenaOverlay">
+
+          <div class="arenaTop">
+            <div class="arenaBadge">
+              SESSION
+              <strong id="marketClock">--:--:--</strong>
+            </div>
+
+            <div class="arenaBadge">
+              AVG
+              <strong id="arenaAvg">--</strong>
+            </div>
+          </div>
+
+          <div class="arenaBottom">
+            <div>
+              <div class="arenaBadge">CURRENT LEADER</div>
+              <div class="arenaLeader" id="arenaLeader">--</div>
+            </div>
+
+            <div class="arenaAvg">
+              0–1% SUBTLE<br>
+              1–3% ACTIVE<br>
+              3–5% HIGH SPEED<br>
+              5–8% SURGE<br>
+              8%+ MOMENTUM SURGE
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panelHead">
+        <div class="panelTitle">Market Pulse</div>
+        <div class="panelMeta">ETF proxies</div>
+      </div>
+
+      <div class="indexGrid" id="indexes">
+        <div class="empty">Loading market data...</div>
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panelHead">
+        <div class="panelTitle">Sector Thrust</div>
+        <div class="panelMeta">Live ETF performance</div>
+      </div>
+
+      <div class="sectorList" id="sectors">
+        <div class="empty">Loading sector data...</div>
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panelHead">
+        <div class="panelTitle">Race Positions</div>
+        <div class="panelMeta" id="periodNote">LIVE INTRADAY</div>
+      </div>
+
+      <div class="list" id="stocks">
+        <div class="empty">Loading stocks...</div>
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panelHead">
+        <div class="panelTitle">Market Events</div>
+        <div class="panelMeta">Live session signals</div>
+      </div>
+
+      <div class="eventList" id="events">
+        <div class="empty">Waiting for data...</div>
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panelHead">
+        <div class="panelTitle">Market Statistics</div>
+        <div class="panelMeta">Watchlist</div>
+      </div>
+
+      <div class="statsGrid">
+
+        <div class="statCard">
+          <div class="statCardLabel">Best performer</div>
+          <div class="statCardValue" id="bestTicker">--</div>
+          <div class="move" id="bestMove">--</div>
+        </div>
+
+        <div class="statCard">
+          <div class="statCardLabel">Weakest performer</div>
+          <div class="statCardValue" id="worstTicker">--</div>
+          <div class="move" id="worstMove">--</div>
+        </div>
+
+        <div class="statCard">
+          <div class="statCardLabel">Largest movement</div>
+          <div class="statCardValue" id="volatileTicker">--</div>
+          <div class="move" id="volatileMove">--</div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="footer">
+    LIVE DATA • CLOUDFLARE WORKER • YAHOO FINANCE • NO AUTOMATIC DEMO DATA
+  </div>
+
+</main>
+
+<div class="dev">
+  <button id="dev">DEV</button>
+
+  <div class="devPanel" id="devPanel">
+    <div>Provider: Cloudflare Worker → Yahoo Finance</div>
+    <div id="devUrl"></div>
+    <div id="devStocks"></div>
+    <div id="devIndexes"></div>
+    <div id="devSectors"></div>
+    <div id="devLast"></div>
+  </div>
+</div>
+
+<div class="modalBack" id="modalBack">
+
+  <div class="modal">
+
+    <div class="modalHead">
+      <div class="modalTitle" id="dt">Stock</div>
+      <button class="close" id="close">×</button>
+    </div>
+
+    <div class="modalBody">
+
+      <div class="detailGrid">
+
+        <div class="detail">
+          <div class="detailLabel">Price</div>
+          <div class="detailValue" id="dn">--</div>
+        </div>
+
+        <div class="detail">
+          <div class="detailLabel">Intraday move</div>
+          <div class="detailValue" id="dm">--</div>
+        </div>
+
+        <div class="detail">
+          <div class="detailLabel">Session range</div>
+          <div class="detailValue" id="ds">--</div>
+        </div>
+
+      </div>
+
+      <canvas id="chart"></canvas>
+
+      <div class="heroSmall" id="de"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+
+<script>
 const CONFIG = {
-  provider: 'Cloudflare Worker → Yahoo Finance',
   workerUrl: 'https://stock-race-data.petercrossan1990.workers.dev/quotes',
   refreshMs: 600000,
   marketTimeZone: 'America/New_York',
   tracked: ['NVDA','AVGO','TSM','AMD','MU','VRT','RKLB','NKE']
 };
 
-const STOCKS = [
-  {t:'NVDA', n:'NVIDIA',      v:'gpu',    s:'Semiconductors'},
-  {t:'AVGO', n:'Broadcom',    v:'net',    s:'Semiconductors'},
-  {t:'TSM',  n:'TSMC',        v:'chip',   s:'Semiconductors'},
-  {t:'AMD',  n:'AMD',         v:'gpu',    s:'Semiconductors'},
-  {t:'MU',   n:'Micron',      v:'memory', s:'Semiconductors'},
-  {t:'VRT',  n:'Vertiv',      v:'cool',   s:'Data Centers'},
-  {t:'RKLB', n:'Rocket Lab',  v:'rocket', s:'Aerospace'},
-  {t:'NKE',  n:'Nike',        v:'shoe',   s:'Consumer'}
+const INDEXES = [
+  { symbol:'QQQ', name:'NASDAQ 100' },
+  { symbol:'SPY', name:'S&P 500' },
+  { symbol:'DIA', name:'DOW JONES' },
+  { symbol:'^VIX', name:'VIX' }
 ];
 
-let data = {};
-let period = '1D';
+const SECTORS = [
+  { symbol:'XLK', name:'Technology' },
+  { symbol:'XLC', name:'Communication Services' },
+  { symbol:'XLY', name:'Consumer Discretionary' },
+  { symbol:'XLI', name:'Industrials' },
+  { symbol:'XLV', name:'Health Care' },
+  { symbol:'XLE', name:'Energy' },
+  { symbol:'XLF', name:'Financials' }
+];
+
+const ALL_SYMBOLS = [
+  ...CONFIG.tracked,
+  ...INDEXES.map(x => x.symbol),
+  ...SECTORS.map(x => x.symbol)
+];
+
+const STOCK_NAMES = {
+  NVDA:'NVIDIA',
+  AVGO:'Broadcom',
+  TSM:'Taiwan Semiconductor',
+  AMD:'AMD',
+  MU:'Micron',
+  VRT:'Vertiv',
+  RKLB:'Rocket Lab',
+  NKE:'Nike'
+};
+
+const STOCK_TYPES = {
+  NVDA:'GPU / AI CORE',
+  AVGO:'NETWORK / DATA',
+  TSM:'CHIP FOUNDRY',
+  AMD:'PROCESSOR / CORE',
+  MU:'MEMORY / DATA',
+  VRT:'COOLING / ENERGY',
+  RKLB:'ROCKET',
+  NKE:'SPEED / RUNNER'
+};
+
+let stocks = {};
+let marketData = {
+  indexes:{},
+  sectors:{}
+};
+
+let selectedPeriod = '1D';
+let lastSessionKey = '';
+let lastFetch = null;
 let soundOn = false;
-let liveMode = false;
-let demoMode = false;
-let pollTimer = null;
-let arena3d = null;
-let arenaFrame = 0;
+let animationId = null;
+let scene = null;
+let camera = null;
+let renderer = null;
+let arenaGroup = null;
+let racers = {};
+let mouseX = 0;
+let mouseY = 0;
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
+function $(id){
+  return document.getElementById(id);
+}
 
-const $ = id => document.getElementById(id);
+function esc(value){
+  return String(value ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
 
-const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
-
-const pct = v =>
-  (v >= 0 ? '+' : '') + Number(v || 0).toFixed(2) + '%';
-
-const cls = v =>
-  v > 0 ? 'up' : v < 0 ? 'down' : '';
-
-function safeNum(v, fallback=0) {
-  const n = Number(v);
+function number(value, fallback=0){
+  const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function formatVol(v) {
-  if (!v) return '—';
-  if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
-  if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
-  if (v >= 1e3) return (v/1e3).toFixed(0) + 'K';
-  return String(Math.round(v));
+function pct(value){
+  const n = number(value);
+  const sign = n > 0 ? '+' : '';
+  return sign + n.toFixed(2) + '%';
 }
 
-/* =========================================================
-   NEW YORK MARKET TIME
-   ========================================================= */
+function cls(value){
+  const n = number(value);
 
-function nyParts() {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: CONFIG.marketTimeZone,
+  if(n > 0.005) return 'pos';
+  if(n < -0.005) return 'neg';
+  return 'flat';
+}
+
+function price(value){
+  const n = number(value);
+
+  if(!Number.isFinite(n)){
+    return '—';
+  }
+
+  if(n >= 1000){
+    return n.toLocaleString(undefined,{
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    });
+  }
+
+  return n.toFixed(2);
+}
+
+function indexPrice(symbol,value){
+  if(symbol === '^VIX'){
+    return price(value);
+  }
+
+  return '$' + price(value);
+}
+
+function formatTime(){
+  try{
+    return new Intl.DateTimeFormat('en-GB',{
+      timeZone:CONFIG.marketTimeZone,
+      hour:'2-digit',
+      minute:'2-digit',
+      second:'2-digit',
+      hour12:false
+    }).format(new Date());
+  }catch{
+    return new Date().toLocaleTimeString();
+  }
+}
+
+function marketParts(){
+  const parts = new Intl.DateTimeFormat('en-US',{
+    timeZone:CONFIG.marketTimeZone,
     year:'numeric',
     month:'2-digit',
     day:'2-digit',
     hour:'2-digit',
     minute:'2-digit',
+    weekday:'short',
     hour12:false
   }).formatToParts(new Date());
 
-  const o = {};
-  parts.forEach(x => o[x.type] = x.value);
-  return o;
+  const result = {};
+
+  parts.forEach(part=>{
+    result[part.type] = part.value;
+  });
+
+  return result;
 }
 
-function nyDateKey() {
-  const p = nyParts();
-  return `${p.year}-${p.month}-${p.day}`;
+function marketIsOpen(){
+  const p = marketParts();
+  const day = p.weekday;
+  const hour = Number(p.hour);
+  const minute = Number(p.minute);
+  const total = hour * 60 + minute;
+
+  if(day === 'Sat' || day === 'Sun'){
+    return false;
+  }
+
+  return total >= 570 && total < 960;
 }
 
-function isWeekday() {
-  const day = new Intl.DateTimeFormat('en-US', {
-    timeZone: CONFIG.marketTimeZone,
-    weekday:'short'
+function sessionKey(){
+  const p = marketParts();
+  return p.year + '-' + p.month + '-' + p.day;
+}
+
+function sessionLabel(){
+  const p = marketParts();
+
+  return new Intl.DateTimeFormat('en-US',{
+    timeZone:CONFIG.marketTimeZone,
+    weekday:'long',
+    month:'short',
+    day:'numeric',
+    year:'numeric'
   }).format(new Date());
-
-  return day !== 'Sat' && day !== 'Sun';
 }
 
-function marketClockText() {
-  const p = nyParts();
-  const h = Number(p.hour);
-  const m = Number(p.minute);
-  const mins = h * 60 + m;
-
-  if (!isWeekday()) {
-    return 'MARKET CLOSED · WEEKEND';
-  }
-
-  if (mins < 570) {
-    return 'PRE-MARKET · OPENS 09:30 ET';
-  }
-
-  if (mins >= 960) {
-    return 'MARKET CLOSED · AFTER HOURS';
-  }
-
-  return 'US MARKET · OPEN';
+function movementFor(symbol){
+  return number(stocks[symbol]?.move);
 }
 
-function marketIsOpen() {
-  const p = nyParts();
-  const mins = Number(p.hour) * 60 + Number(p.minute);
-
-  return isWeekday() && mins >= 570 && mins < 960;
+function sortedStocks(){
+  return CONFIG.tracked
+    .map(symbol => stocks[symbol])
+    .filter(Boolean)
+    .sort((a,b) => b.move - a.move);
 }
 
-/* =========================================================
-   STATE
-   ========================================================= */
+function averageMove(){
+  const values = CONFIG.tracked
+    .map(symbol => stocks[symbol])
+    .filter(x => x && Number.isFinite(x.move))
+    .map(x => x.move);
 
-function setState(text) {
-  const updated = $('updated');
-  if (updated) updated.textContent = text;
+  if(!values.length) return 0;
+
+  return values.reduce((a,b)=>a+b,0) / values.length;
 }
 
-function initialiseStocks() {
-  data = {};
+function initialiseStock(symbol,q){
+  const move = number(q?.percentChange);
 
-  STOCKS.forEach(s => {
-    data[s.t] = {
-      ...s,
-      c: 0,
-      price: 0,
-      open: 0,
-      high: 0,
-      low: 0,
-      vol: 0,
-      previousClose: 0,
-      hist: [0],
-      spark: [0],
-      live: false
-    };
-  });
-}
-
-/* =========================================================
-   CLOUDFLARE WORKER
-   ========================================================= */
-
-async function fetchQuotes() {
-
-  const symbols = CONFIG.tracked.join(',');
-
-  const url =
-    `${CONFIG.workerUrl}?symbols=${encodeURIComponent(symbols)}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    cache: 'no-store'
-  });
-
-  if (!response.ok) {
-    throw new Error(`Worker HTTP ${response.status}`);
-  }
-
-  const result = await response.json();
-
-  if (!result || !result.ok || !result.data) {
-    throw new Error('Worker returned invalid data');
-  }
-
-  let count = 0;
-
-  Object.entries(result.data).forEach(([symbol,q]) => {
-
-    if (!data[symbol]) return;
-
-    if (q.error) {
-      console.warn(symbol, q.error);
-      return;
-    }
-
-    const d = data[symbol];
-
-    d.price = safeNum(q.price);
-    d.open = safeNum(q.open, d.price);
-    d.high = safeNum(q.high, d.price);
-    d.low = safeNum(q.low, d.price);
-    d.vol = safeNum(q.volume);
-    d.previousClose = safeNum(q.previousClose);
-    d.c = safeNum(
-      q.percentChange,
-      d.open ? ((d.price - d.open) / d.open) * 100 : 0
-    );
-
-    d.live = true;
-
-    d.spark = [
-      ...(d.spark || []),
-      d.c
-    ].slice(-40);
-
-    d.hist = d.spark;
-
-    count++;
-  });
-
-  if (!count) {
-    throw new Error('No live stock data returned');
-  }
-
-  liveMode = true;
-  demoMode = false;
-
-  const status = marketClockText();
-
-  setState(
-    marketIsOpen()
-      ? `● LIVE · ${count}/8 STOCKS`
-      : `LAST DATA · ${count}/8 STOCKS`
-  );
-
-  const updated = $('updated');
-
-  if (updated) {
-    updated.textContent =
-      `LIVE · ${new Date().toLocaleTimeString([], {
-        hour:'2-digit',
-        minute:'2-digit',
-        second:'2-digit'
-      })}`;
-  }
-
-  return true;
-}
-
-/* =========================================================
-   EXPLICIT DEMO MODE
-   ========================================================= */
-
-function enterDemoMode() {
-
-  demoMode = true;
-  liveMode = false;
-
-  const seeds = {
-    NVDA:224,
-    AVGO:353,
-    TSM:451,
-    AMD:630,
-    MU:1083,
-    VRT:250,
-    RKLB:74,
-    NKE:36
+  return {
+    symbol,
+    name:STOCK_NAMES[symbol] || symbol,
+    type:STOCK_TYPES[symbol] || 'MARKET ASSET',
+    price:number(q?.price),
+    open:number(q?.open),
+    high:number(q?.high),
+    low:number(q?.low),
+    volume:number(q?.volume),
+    move,
+    live:!q?.error,
+    currency:q?.currency || 'USD',
+    marketState:q?.marketState || '',
+    spark:[move]
   };
-
-  STOCKS.forEach(s => {
-
-    const p = seeds[s.t];
-
-    data[s.t] = {
-      ...s,
-      c:0,
-      price:p,
-      open:p,
-      high:p,
-      low:p,
-      vol:0,
-      previousClose:p,
-      hist:[0],
-      spark:[0],
-      live:false
-    };
-
-  });
-
-  setState('DEMO MODE · SIMULATED DATA');
-
-  render();
 }
 
-/* =========================================================
-   LIVE REFRESH
-   ========================================================= */
+function updateStock(symbol,q){
+  const existing = stocks[symbol];
 
-async function liveRefresh(manual=false) {
+  const move = number(q?.percentChange);
 
-  if (demoMode) {
-    enterDemoMode();
+  if(!existing){
+    stocks[symbol] = initialiseStock(symbol,q);
     return;
   }
 
-  try {
+  existing.price = number(q?.price);
+  existing.open = number(q?.open);
+  existing.high = number(q?.high);
+  existing.low = number(q?.low);
+  existing.volume = number(q?.volume);
+  existing.move = move;
+  existing.live = !q?.error;
+  existing.currency = q?.currency || existing.currency;
+  existing.marketState = q?.marketState || existing.marketState;
 
-    await fetchQuotes();
+  existing.spark.push(move);
 
-    render();
-
-  } catch(error) {
-
-    console.error('Market data error:', error);
-
-    setState(
-      `DATA ERROR · ${error.message.slice(0,38)}`
-    );
-
-    if (manual) {
-      alert(
-        'The live market-data connection returned an error:\n\n' +
-        error.message
-      );
-    }
-
+  if(existing.spark.length > 90){
+    existing.spark.shift();
   }
 }
 
-/* =========================================================
-   POLLING
-   ========================================================= */
+async function fetchQuotes(){
+  const url =
+    CONFIG.workerUrl +
+    '?symbols=' +
+    encodeURIComponent(ALL_SYMBOLS.join(','));
 
-function startPolling() {
+  try{
 
-  clearInterval(pollTimer);
-
-  pollTimer = setInterval(() => {
-
-    /*
-      Poll during the US session.
-      Outside regular hours we don't hammer the Worker.
-    */
-
-    if (marketIsOpen()) {
-      liveRefresh(false);
-    }
-
-  }, CONFIG.refreshMs);
-}
-
-/* =========================================================
-   DAILY RESET
-   ========================================================= */
-
-let lastRaceDay = null;
-
-function checkDailyReset() {
-
-  const today = nyDateKey();
-
-  if (lastRaceDay === null) {
-    lastRaceDay = today;
-    return;
-  }
-
-  if (today !== lastRaceDay) {
-
-    lastRaceDay = today;
-
-    Object.values(data).forEach(d => {
-      d.hist = [0];
-      d.spark = [0];
+    const response = await fetch(url,{
+      method:'GET',
+      cache:'no-store'
     });
 
-    console.log('Daily race reset:', today);
+    if(!response.ok){
+      throw new Error('Worker HTTP ' + response.status);
+    }
+
+    const result = await response.json();
+
+    const stockPayload =
+      result.stocks ||
+      result.data ||
+      {};
+
+    CONFIG.tracked.forEach(symbol=>{
+      const q = stockPayload[symbol];
+
+      if(q){
+        updateStock(symbol,q);
+      }
+    });
+
+    marketData.indexes =
+      result.indexes ||
+      {};
+
+    marketData.sectors =
+      result.sectors ||
+      {};
+
+    lastFetch = new Date();
+
+    renderAll();
+
+    $('devLast').textContent =
+      'Last fetch: ' + lastFetch.toLocaleTimeString();
+
+  }catch(error){
+
+    console.error('Stock Race fetch error:',error);
+
+    $('marketStatus').textContent =
+      'Data connection error: ' + error.message;
+
+    $('arenaStatus').textContent =
+      'Worker connection error';
+
+    $('devLast').textContent =
+      'Fetch error: ' + error.message;
   }
 }
 
-/* =========================================================
-   SPARKLINE
-   ========================================================= */
+function renderHeader(){
+  $('sessionDay').textContent = sessionLabel();
 
-function spark(a) {
+  const open = marketIsOpen();
 
-  if (!a || !a.length) a = [0];
+  $('marketStatus').textContent =
+    open
+      ? 'US market open • live intraday movement'
+      : 'US market closed • latest available session data';
 
-  const w = 220;
-  const h = 40;
-  const m = 4;
+  $('marketClock').textContent = formatTime();
 
-  const min = Math.min(...a);
-  const max = Math.max(...a);
-  const range = max - min || 1;
+  const avg = averageMove();
 
-  const points = a.map((v,i) => {
+  $('avgMove').textContent = pct(avg);
+  $('avgMove').className = 'statValue ' + cls(avg);
 
-    const x =
-      m + i * (w - 2*m) / (a.length - 1 || 1);
+  const ranked = sortedStocks();
 
-    const y =
-      h - m -
-      ((v - min) / range) * (h - 2*m);
+  if(ranked.length){
 
-    return `${x},${y}`;
+    const leader = ranked[0];
 
-  }).join(' ');
+    $('leaderBadge').textContent = leader.symbol;
+    $('leaderBadge').className =
+      'statValue ' + cls(leader.move);
 
-  return `
-    <svg viewBox="0 0 ${w} ${h}"
-         preserveAspectRatio="none">
-      <polyline
-        fill="none"
-        stroke="${a[a.length-1] >= 0 ? '#43e58a' : '#ff6474'}"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        points="${points}"
-      />
-    </svg>
-  `;
+    $('arenaLeader').textContent =
+      leader.symbol + ' ' + pct(leader.move);
+
+    $('arenaAvg').textContent =
+      'AVG ' + pct(avg);
+
+  }else{
+
+    $('leaderBadge').textContent = '--';
+    $('arenaLeader').textContent = '--';
+    $('arenaAvg').textContent = '--';
+  }
+
+  $('updated').textContent =
+    lastFetch
+      ? lastFetch.toLocaleTimeString()
+      : '--';
 }
 
-/* =========================================================
-   2D RACE
-   ========================================================= */
+function renderStocks(){
+  const container = $('stocks');
 
-function race() {
+  const ranked = sortedStocks();
 
-  const arr = Object.values(data)
-    .filter(s => s.t)
-    .sort((a,b) => b.c - a.c);
+  if(!ranked.length){
+    container.innerHTML =
+      '<div class="empty">No live stock data available.</div>';
+    return;
+  }
 
-  $('lanes').innerHTML = arr.map(s => {
+  container.innerHTML = ranked.map((s,index)=>{
 
-    const left =
-      clamp(50 + s.c * 4, 3, 97);
-
-    const movement = Math.abs(s.c);
-
-    const mode =
-      movement >= 8
-        ? 'mega'
-        : movement >= 4
-          ? 'surge'
-          : '';
-
-    const tag =
-      movement >= 8
-        ? 'MOMENTUM SURGE'
-        : movement >= 4
-          ? 'ACCELERATING'
-          : 'TRACKING';
+    const movement = number(s.move);
 
     return `
-      <div class="lane">
+      <div class="row stockRow" data-symbol="${esc(s.symbol)}">
+        <div class="rank">#${index + 1}</div>
 
-        <div class="laneMeta">
-          <div class="ticker">${s.t}</div>
-          <div class="company">${s.n}</div>
+        <div>
+          <div class="ticker">${esc(s.symbol)}</div>
+          <div class="name">${esc(s.name)} • ${esc(s.type)}</div>
         </div>
 
-        <div class="track">
+        <div>
+          <div class="move ${cls(movement)}">${pct(movement)}</div>
+          <div class="price">$${price(s.price)}</div>
+        </div>
+      </div>
+    `;
 
-          ${[20,40,60,80]
-            .map(x => `<i style="left:${x}%"></i>`)
-            .join('')}
+  }).join('');
 
+  container
+    .querySelectorAll('.stockRow')
+    .forEach(row=>{
+      row.addEventListener('click',()=>{
+        openDetail(row.dataset.symbol);
+      });
+    });
+}
+
+function renderIndexes(){
+  const container = $('indexes');
+
+  container.innerHTML = INDEXES.map(item=>{
+
+    const q = marketData.indexes[item.symbol];
+
+    if(!q || q.error || q.price == null){
+
+      return `
+        <div class="indexCard">
+          <div class="indexName">${esc(item.name)}</div>
+          <div class="indexPrice">—</div>
+          <div class="indexMove flat">No data</div>
+        </div>
+      `;
+    }
+
+    const move = number(q.percentChange);
+
+    return `
+      <div class="indexCard">
+        <div class="indexName">${esc(item.name)}</div>
+        <div class="indexPrice">${indexPrice(item.symbol,q.price)}</div>
+        <div class="indexMove ${cls(move)}">${pct(move)}</div>
+      </div>
+    `;
+
+  }).join('');
+}
+
+function renderSectors(){
+  const container = $('sectors');
+
+  const available = SECTORS
+    .map(item=>{
+      const q = marketData.sectors[item.symbol];
+
+      return {
+        ...item,
+        q
+      };
+    })
+    .filter(item=>item.q && !item.q.error);
+
+  if(!available.length){
+    container.innerHTML =
+      '<div class="empty">No sector data available.</div>';
+    return;
+  }
+
+  available.sort((a,b)=>
+    number(b.q.percentChange) -
+    number(a.q.percentChange)
+  );
+
+  container.innerHTML = available.map(item=>{
+
+    const move = number(item.q.percentChange);
+    const width = Math.min(Math.abs(move) * 15,100);
+
+    return `
+      <div class="sectorRow">
+
+        <div class="sectorTop">
+          <div class="sectorName">${esc(item.name)}</div>
+          <div class="sectorPct ${cls(move)}">${pct(move)}</div>
+        </div>
+
+        <div class="bar">
           <div
-            class="racer ${s.v} ${mode}"
-            style="left:${left}%"
-          >
-
-            ${
-              s.v === 'rocket' && s.c > 1
-              ? '<div class="exhaust"></div>'
-              : ''
-            }
-
-            <div class="tail"></div>
-            <div class="body"></div>
-            <div class="core"></div>
-
-          </div>
-
-        </div>
-
-        <div class="move ${cls(s.c)}">
-          ${pct(s.c)}
-        </div>
-
-        <div class="tag">
-          ${tag}
+            class="barFill ${move < 0 ? 'negative' : ''}"
+            style="width:${Math.max(width,2)}%"
+          ></div>
         </div>
 
       </div>
@@ -514,700 +1503,311 @@ function race() {
   }).join('');
 }
 
-/* =========================================================
-   STOCK CARDS
-   ========================================================= */
+function renderEvents(){
+  const container = $('events');
 
-function stocks() {
+  const ranked = sortedStocks();
 
-  $('stocks').innerHTML =
-    Object.values(data)
-      .filter(s => s.t)
-      .map(s => {
+  if(!ranked.length){
+    container.innerHTML =
+      '<div class="empty">Waiting for live market data...</div>';
+    return;
+  }
 
-        const momentum =
-          clamp(50 + s.c * 9, 4, 96);
+  const leader = ranked[0];
+  const weakest = ranked[ranked.length - 1];
 
-        const state =
-          Math.abs(s.c) >= 8
-            ? 'SURGE'
-            : Math.abs(s.c) >= 4
-              ? 'ACCELERATING'
-              : s.c > 0
-                ? 'RISING'
-                : s.c < 0
-                  ? 'FALLING'
-                  : 'FLAT';
+  const events = [];
 
-        return `
-          <article
-            class="stock"
-            data-t="${s.t}"
-          >
+  events.push({
+    time:formatTime(),
+    text:`${leader.symbol} leads the watchlist at ${pct(leader.move)}.`
+  });
 
-            <div class="stockTop">
+  events.push({
+    time:formatTime(),
+    text:`${weakest.symbol} is currently at ${pct(weakest.move)}.`
+  });
 
-              <div class="stockName">
+  const indexMoves = INDEXES
+    .map(item=>marketData.indexes[item.symbol])
+    .filter(q=>q && !q.error);
 
-                <div class="avatar ${s.v}">
-                  ${s.t.slice(0,2)}
-                </div>
+  if(indexMoves.length){
 
-                <div>
-                  <div class="stockTicker">
-                    ${s.t}
-                  </div>
+    const spy = marketData.indexes.SPY;
 
-                  <div class="stockCompany">
-                    ${s.n}
-                  </div>
-                </div>
+    if(spy){
+      events.push({
+        time:formatTime(),
+        text:`S&P 500 proxy is ${pct(number(spy.percentChange))} intraday.`
+      });
+    }
 
-              </div>
+    const vix = marketData.indexes['^VIX'];
 
-              <div class="stockMove ${cls(s.c)}">
-                ${pct(s.c)}
-              </div>
+    if(vix){
+      events.push({
+        time:formatTime(),
+        text:`VIX is ${pct(number(vix.percentChange))} versus its session open.`
+      });
+    }
+  }
 
-            </div>
-
-            <div class="priceRow">
-
-              <div class="price">
-                ${s.price ? '$' + s.price.toFixed(2) : '—'}
-              </div>
-
-              <div class="stockState ${cls(s.c)}">
-                ${state}
-              </div>
-
-            </div>
-
-            <div class="spark">
-              ${spark(s.spark || [0])}
-            </div>
-
-            <div class="meter">
-
-              <div class="meterLabel">
-                <span>MOMENTUM</span>
-                <b>${state}</b>
-              </div>
-
-              <div class="meterTrack">
-                <i style="width:${momentum}%"></i>
-              </div>
-
-            </div>
-
-            <div class="small statline">
-
-              <span>
-                OPEN
-                <b>
-                  ${s.open ? '$' + s.open.toFixed(2) : '—'}
-                </b>
-              </span>
-
-              <span>
-                HIGH
-                <b>
-                  ${s.high ? '$' + s.high.toFixed(2) : '—'}
-                </b>
-              </span>
-
-              <span>
-                LOW
-                <b>
-                  ${s.low ? '$' + s.low.toFixed(2) : '—'}
-                </b>
-              </span>
-
-              <span>
-                VOL
-                <b>${formatVol(s.vol)}</b>
-              </span>
-
-            </div>
-
-          </article>
-        `;
-
-      })
-      .join('');
-
-  document
-    .querySelectorAll('.stock')
-    .forEach(x => {
-      x.onclick = () => detail(x.dataset.t);
-    });
+  container.innerHTML = events.map(event=>`
+    <div class="event">
+      <div class="eventTime">${esc(event.time)}</div>
+      <div class="eventText">${esc(event.text)}</div>
+    </div>
+  `).join('');
 }
 
-/* =========================================================
-   LEADERS
-   ========================================================= */
+function renderStats(){
+  const ranked = sortedStocks();
 
-function leaders() {
+  if(!ranked.length){
+    return;
+  }
 
-  const a =
-    Object.values(data).filter(x => x.t);
+  const best = ranked[0];
+  const worst = ranked[ranked.length - 1];
 
-  if (!a.length) return;
-
-  const sorted =
-    [...a].sort((x,y) => y.c - x.c);
-
-  const best = sorted[0];
-  const worst = sorted[sorted.length - 1];
-
-  const volatile =
-    [...a].sort(
-      (x,y) => Math.abs(y.c) - Math.abs(x.c)
+  const volatile = [...ranked]
+    .sort((a,b)=>
+      Math.abs(b.move) -
+      Math.abs(a.move)
     )[0];
 
-  $('bestTicker').textContent =
-    best?.t || '—';
+  $('bestTicker').textContent = best.symbol;
+  $('bestMove').textContent = pct(best.move);
+  $('bestMove').className = 'move ' + cls(best.move);
 
-  $('bestMove').textContent =
-    best ? pct(best.c) : '—';
+  $('worstTicker').textContent = worst.symbol;
+  $('worstMove').textContent = pct(worst.move);
+  $('worstMove').className = 'move ' + cls(worst.move);
 
-  $('worstTicker').textContent =
-    worst?.t || '—';
-
-  $('worstMove').textContent =
-    worst ? pct(worst.c) : '—';
-
-  $('volatileTicker').textContent =
-    volatile?.t || '—';
-
-  $('volatileMove').textContent =
-    volatile ? pct(volatile.c) : '—';
-
-  $('leaderBadge').textContent =
-    best ? `#1 ${best.t}` : 'AWAITING DATA';
+  $('volatileTicker').textContent = volatile.symbol;
+  $('volatileMove').textContent = pct(volatile.move);
+  $('volatileMove').className = 'move ' + cls(volatile.move);
 }
 
-/* =========================================================
-   MARKET HERO
-   ========================================================= */
+function renderPeriod(){
+  document
+    .querySelectorAll('.period')
+    .forEach(button=>{
+      button.classList.toggle(
+        'active',
+        button.dataset.period === selectedPeriod
+      );
+    });
 
-function marketHero() {
+  if(selectedPeriod === '1D'){
+    $('periodNote').textContent =
+      'LIVE INTRADAY';
+  }else{
+    $('periodNote').textContent =
+      'HISTORICAL DATA NOT CONNECTED';
+  }
+}
 
-  const p = nyParts();
+function renderAll(){
+  renderHeader();
+  renderStocks();
+  renderIndexes();
+  renderSectors();
+  renderEvents();
+  renderStats();
+  renderPeriod();
 
-  const clock =
-    `${p.hour}:${p.minute}`;
-
-  const a =
-    Object.values(data).filter(x => x.t);
-
-  const avg =
-    a.length
-      ? a.reduce((x,y) => x + y.c, 0) / a.length
-      : 0;
-
-  const up =
-    a.filter(x => x.c > 0).length;
-
-  const down =
-    a.filter(x => x.c < 0).length;
-
-  $('marketClock').textContent =
-    clock + ' ET';
-
-  $('marketStatus').textContent =
-    marketClockText();
+  const valid = CONFIG.tracked
+    .map(s=>stocks[s])
+    .filter(s=>s && s.live);
 
   $('breadth').textContent =
-    `${up} UP · ${down} DOWN`;
-
-  $('avgMove').textContent =
-    pct(avg);
-
-  $('avgMove').className =
-    cls(avg) + ' heroMetric';
-
-  $('racePulse').style.width =
-    clamp(50 + avg * 8, 5, 95) + '%';
-
-  $('sessionDay').textContent =
-    nyDateKey();
+    valid.length + '/' + CONFIG.tracked.length;
 
   $('arenaStatus').textContent =
-    marketIsOpen()
-      ? 'LIVE MARKET DATA'
-      : 'MARKET CLOSED · LAST DATA';
+    valid.length === CONFIG.tracked.length
+      ? 'All watchlist assets live'
+      : valid.length + '/' + CONFIG.tracked.length + ' assets reporting';
+
+  $('devStocks').textContent =
+    'Stocks live: ' + valid.length + '/' + CONFIG.tracked.length;
+
+  $('devIndexes').textContent =
+    'Indexes loaded: ' +
+    Object.values(marketData.indexes)
+      .filter(x=>x && !x.error)
+      .length +
+    '/' + INDEXES.length;
+
+  $('devSectors').textContent =
+    'Sectors loaded: ' +
+    Object.values(marketData.sectors)
+      .filter(x=>x && !x.error)
+      .length +
+    '/' + SECTORS.length;
 }
 
-/* =========================================================
-   EVENTS
-   ========================================================= */
+function resetRace(){
+  CONFIG.tracked.forEach(symbol=>{
+    if(stocks[symbol]){
+      stocks[symbol].spark = [stocks[symbol].move];
+    }
+  });
 
-function events() {
+  renderAll();
+}
 
-  const a =
-    Object.values(data)
-      .filter(x => x.t)
-      .sort(
-        (x,y) =>
-          Math.abs(y.c) - Math.abs(x.c)
-      );
+function openDetail(symbol){
+  const s = stocks[symbol];
 
-  let items = [];
+  if(!s){
+    return;
+  }
 
-  a.slice(0,4).forEach(s => {
+  $('dt').textContent =
+    s.symbol + ' — ' + s.name;
 
-    if (Math.abs(s.c) >= 1.5) {
+  $('dn').textContent =
+    '$' + price(s.price);
 
-      items.push([
-        s.c > 0 ? '⚡' : '⚠',
-        `${s.t} ${s.c > 0 ? 'MOMENTUM' : 'DOWNSIDE'} MOVE`,
-        `${s.n} is ${pct(s.c)} from today's open.`
-      ]);
+  $('dm').textContent =
+    pct(s.move);
 
+  $('dm').className =
+    'detailValue ' + cls(s.move);
+
+  $('ds').textContent =
+    '$' + price(s.low) +
+    ' – $' +
+    price(s.high);
+
+  $('de').textContent =
+    s.type +
+    ' • Volume ' +
+    number(s.volume).toLocaleString();
+
+  drawDetailChart(s);
+
+  $('modalBack').classList.add('show');
+}
+
+function closeDetail(){
+  $('modalBack').classList.remove('show');
+}
+
+function drawDetailChart(stock){
+  const canvas = $('chart');
+
+  const rect = canvas.getBoundingClientRect();
+
+  const width = Math.max(300,rect.width);
+  const height = Math.max(160,rect.height);
+
+  const ratio = window.devicePixelRatio || 1;
+
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+
+  const ctx = canvas.getContext('2d');
+
+  ctx.scale(ratio,ratio);
+
+  ctx.clearRect(0,0,width,height);
+
+  const values =
+    stock.spark && stock.spark.length
+      ? stock.spark
+      : [stock.move];
+
+  const min =
+    Math.min(...values,0);
+
+  const max =
+    Math.max(...values,0);
+
+  const range =
+    Math.max(max-min,.1);
+
+  const left = 18;
+  const right = width - 18;
+  const top = 18;
+  const bottom = height - 18;
+
+  ctx.strokeStyle = '#17202d';
+  ctx.lineWidth = 1;
+
+  for(let i=0;i<4;i++){
+
+    const y =
+      top +
+      (bottom-top) * i / 3;
+
+    ctx.beginPath();
+    ctx.moveTo(left,y);
+    ctx.lineTo(right,y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle =
+    stock.move >= 0
+      ? '#36f39a'
+      : '#ff4d67';
+
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  values.forEach((value,index)=>{
+
+    const x =
+      values.length === 1
+        ? (left+right)/2
+        : left +
+          (right-left) *
+          index /
+          (values.length-1);
+
+    const y =
+      bottom -
+      ((value-min)/range) *
+      (bottom-top);
+
+    if(index === 0){
+      ctx.moveTo(x,y);
+    }else{
+      ctx.lineTo(x,y);
     }
 
   });
 
-  if (data.RKLB?.c >= 2) {
-
-    items.unshift([
-      '🚀',
-      'RKLB ROCKET BOOST',
-      `Rocket acceleration is active at ${pct(data.RKLB.c)}.`
-    ]);
-
-  }
-
-  if (!items.length) {
-
-    items = [
-
-      [
-        '◉',
-        'MARKET WATCH',
-        liveMode
-          ? 'Live prices are being tracked.'
-          : 'Waiting for live market data.'
-      ],
-
-      [
-        '⌁',
-        'RADAR ACTIVE',
-        'Relative momentum is being tracked across your watchlist.'
-      ],
-
-      [
-        '↻',
-        'DAILY RESET READY',
-        'Every racer starts from 0% at the regular US session open.'
-      ]
-
-    ];
-
-  }
-
-  $('events').innerHTML =
-    items.slice(0,5).map(e => `
-
-      <div class="event">
-
-        <div class="eventIcon">
-          ${e[0]}
-        </div>
-
-        <div>
-          <div class="eventTitle">
-            ${e[1]}
-          </div>
-
-          <div class="eventText">
-            ${e[2]}
-          </div>
-        </div>
-
-        <div class="eventTime">
-          NOW
-        </div>
-
-      </div>
-
-    `).join('');
+  ctx.stroke();
 }
 
-/* =========================================================
-   SECTORS
-   ========================================================= */
+function initThree(){
+  const canvas = $('race3d');
 
-function sectorRow(n,v) {
+  scene = new THREE.Scene();
 
-  const w =
-    clamp(Math.abs(v) * 9, 3, 100);
+  scene.background = new THREE.Color(0x03060a);
 
-  return `
-    <div class="sector">
+  camera = new THREE.PerspectiveCamera(
+    45,
+    canvas.clientWidth / canvas.clientHeight,
+    0.1,
+    1000
+  );
 
-      <div class="sectorName">
-        ${n}
-      </div>
+  camera.position.set(0,5.8,16);
 
-      <div class="sectorBar">
-
-        <div
-          class="sectorFill"
-          style="
-            width:${w}%;
-            background:${v >= 0
-              ? 'var(--green)'
-              : 'var(--red)'};
-          "
-        ></div>
-
-      </div>
-
-      <div class="sectorPct ${cls(v)}">
-        ${pct(v)}
-      </div>
-
-    </div>
-  `;
-}
-
-function sectors() {
-
-  const groups = {};
-
-  Object.values(data)
-    .filter(x => x.t)
-    .forEach(s => {
-
-      if (!groups[s.s]) {
-        groups[s.s] = [];
-      }
-
-      groups[s.s].push(s.c);
-
-    });
-
-  $('sectors').innerHTML =
-    Object.entries(groups)
-      .map(([name,values]) => {
-
-        const avg =
-          values.reduce((a,b) => a+b,0)
-          / values.length;
-
-        return sectorRow(name,avg);
-
-      })
-      .join('');
-
-}
-
-/* =========================================================
-   MARKET RADAR
-   ========================================================= */
-
-function radar() {
-
-  const box = $('radar');
-
-  box
-    .querySelectorAll('.node')
-    .forEach(n => n.remove());
-
-  const a =
-    Object.values(data)
-      .filter(s => s.t);
-
-  a.forEach((s,i) => {
-
-    const n =
-      document.createElement('div');
-
-    const angle =
-      Math.PI * 2 / a.length * i
-      - Math.PI / 2;
-
-    const radius =
-      55 + Math.abs(s.c) * 7;
-
-    const x =
-      50 + Math.cos(angle) * radius / 2.7;
-
-    const y =
-      50 + Math.sin(angle) * radius / 2.7;
-
-    n.className =
-      'node ' +
-      (s.c >= 0 ? 'up' : 'down');
-
-    n.style.left =
-      `calc(${x}% - 20px)`;
-
-    n.style.top =
-      `calc(${y}% - 20px)`;
-
-    n.textContent = s.t;
-
-    n.onclick =
-      () => detail(s.t);
-
-    box.appendChild(n);
-
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias:true,
+    alpha:true
   });
 
-}
-
-/* =========================================================
-   INDEX PANEL
-   ========================================================= */
-
-function indexes() {
-
-  const names = [
-    ['NASDAQ','—'],
-    ['S&P 500','—'],
-    ['DOW','—'],
-    ['VIX','—']
-  ];
-
-  $('indexes').innerHTML =
-    names.map(x => `
-
-      <div class="index">
-
-        <div class="indexName">
-          ${x[0]}
-        </div>
-
-        <div class="indexVal">
-          ${x[1]}
-        </div>
-
-        <div class="indexPct">
-          —
-        </div>
-
-      </div>
-
-    `).join('');
-
-}
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
-function render() {
-
-  race();
-  indexes();
-  stocks();
-  events();
-  sectors();
-  radar();
-  leaders();
-  marketHero();
-  updateArena3D();
-
-  const a =
-    Object.values(data)
-      .filter(x => x.t);
-
-  const leader =
-    [...a].sort((x,y) => y.c - x.c)[0];
-
-  $('gainers').textContent =
-    a.filter(x => x.c > 0).length;
-
-  $('losers').textContent =
-    a.filter(x => x.c < 0).length;
-
-  $('leader').textContent =
-    leader?.t || '—';
-
-  $('best').textContent =
-    leader ? pct(leader.c) : '—';
-
-  $('periodNote').textContent =
-    period === '1D'
-      ? 'LIVE INTRADAY'
-      : 'LIVE DATA · 1D ENGINE';
-
-}
-
-/* =========================================================
-   DETAIL MODAL
-   ========================================================= */
-
-function detail(t) {
-
-  const s = data[t];
-
-  if (!s) return;
-
-  const a =
-    s.spark?.length
-      ? s.spark
-      : [0];
-
-  const w = 620;
-  const h = 170;
-  const p = 12;
-
-  const min =
-    Math.min(...a);
-
-  const max =
-    Math.max(...a);
-
-  const range =
-    max - min || 1;
-
-  const points =
-    a.map((v,i) => {
-
-      const x =
-        p +
-        i * (w - 2*p)
-        / (a.length - 1 || 1);
-
-      const y =
-        h -
-        p -
-        ((v-min)/range)
-        * (h-2*p);
-
-      return `${x},${y}`;
-
-    }).join(' ');
-
-  $('dt').textContent =
-    s.t;
-
-  $('dn').textContent =
-    s.n;
-
-  $('dm').textContent =
-    `$${s.price.toFixed(2)} · ${pct(s.c)} today`;
-
-  $('dm').className =
-    'sub ' + cls(s.c);
-
-  $('chart').innerHTML = `
-    <svg viewBox="0 0 ${w} ${h}">
-      <polyline
-        class="detailPath"
-        points="${points}"
-      />
-    </svg>
-  `;
-
-  $('ds').innerHTML = [
-
-    ['OPEN', s.open],
-    ['HIGH', s.high],
-    ['LOW', s.low],
-    ['VOLUME', formatVol(s.vol)],
-    ['PREV CLOSE',
-      s.previousClose || '—'],
-    ['SESSION',
-      nyDateKey()]
-
-  ].map(x => `
-
-    <div class="detailStat">
-
-      <span>${x[0]}</span>
-
-      <b>
-        ${
-          typeof x[1] === 'number'
-            ? '$' + x[1].toFixed(2)
-            : x[1]
-        }
-      </b>
-
-    </div>
-
-  `).join('');
-
-  $('de').textContent =
-    Math.abs(s.c) >= 8
-      ? 'MOMENTUM SURGE mode active.'
-      : Math.abs(s.c) >= 4
-        ? 'Acceleration mode active.'
-        : liveMode
-          ? 'Live market tracking active.'
-          : 'Waiting for live data.';
-
-  $('modalBack')
-    .classList
-    .add('show');
-}
-
-/* =========================================================
-   3D MARKET ARENA
-   ========================================================= */
-
-const arenaColor = {
-  NVDA:0x5de7ff,
-  AVGO:0xa98bff,
-  TSM:0xffd166,
-  AMD:0xff5f73,
-  MU:0x42f59b,
-  VRT:0x6ee7ff,
-  RKLB:0xff8a3d,
-  NKE:0xffffff
-};
-
-function initArena3D() {
-
-  const canvas =
-    document.getElementById('race3d');
-
-  if (!canvas || !window.THREE) return;
-
-  const scene =
-    new THREE.Scene();
-
-  scene.fog =
-    new THREE.FogExp2(
-      0x03070b,
-      .008
-    );
-
-  const camera =
-    new THREE.PerspectiveCamera(
-      58,
-      canvas.clientWidth /
-      canvas.clientHeight,
-      .1,
-      5000
-    );
-
-  camera.position.set(
-    0,
-    42,
-    82
-  );
-
-  camera.lookAt(
-    0,
-    0,
-    -80
-  );
-
-  const renderer =
-    new THREE.WebGLRenderer({
-      canvas,
-      antialias:true,
-      alpha:true
-    });
-
   renderer.setPixelRatio(
-    Math.min(devicePixelRatio,1.8)
+    Math.min(window.devicePixelRatio || 1,2)
   );
 
   renderer.setSize(
@@ -1216,781 +1816,484 @@ function initArena3D() {
     false
   );
 
-  renderer.outputColorSpace =
-    THREE.SRGBColorSpace;
+  const ambient =
+    new THREE.AmbientLight(0xffffff,.45);
 
-  scene.add(
-    new THREE.AmbientLight(
-      0x86cfff,
-      .55
-    )
-  );
+  scene.add(ambient);
 
-  const key =
-    new THREE.PointLight(
-      0x5de7ff,
-      2.2,
-      700
-    );
+  const directional =
+    new THREE.DirectionalLight(0x8adfff,1.3);
 
-  key.position.set(
-    0,
-    45,
-    40
-  );
+  directional.position.set(3,8,6);
 
-  scene.add(key);
+  scene.add(directional);
 
-  const sun =
-    new THREE.DirectionalLight(
-      0xffffff,
-      1.2
-    );
+  arenaGroup = new THREE.Group();
 
-  sun.position.set(
-    0,
-    80,
-    30
-  );
+  scene.add(arenaGroup);
 
-  scene.add(sun);
+  createTrack();
+  createRacers();
 
-  const track =
+  window.addEventListener('resize',resizeThree);
+
+  canvas.addEventListener('mousemove',event=>{
+    const rect = canvas.getBoundingClientRect();
+
+    mouseX =
+      ((event.clientX - rect.left) / rect.width - .5) * 2;
+
+    mouseY =
+      ((event.clientY - rect.top) / rect.height - .5) * 2;
+  });
+
+  animateThree();
+}
+
+function createTrack(){
+  const trackLength = 34;
+  const lanes = CONFIG.tracked.length;
+  const spacing = 1.35;
+
+  const floorGeometry =
+    new THREE.PlaneGeometry(42,30);
+
+  const floorMaterial =
+    new THREE.MeshStandardMaterial({
+      color:0x060b12,
+      metalness:.7,
+      roughness:.5
+    });
+
+  const floor =
     new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        210,
-        420
-      ),
-      new THREE.MeshStandardMaterial({
-        color:0x07131c,
-        metalness:.55,
-        roughness:.48
-      })
+      floorGeometry,
+      floorMaterial
     );
 
-  track.rotation.x =
-    -Math.PI / 2;
+  floor.rotation.x = -Math.PI/2;
+  floor.position.y = -0.65;
 
-  track.position.set(
-    0,
-    -7,
-    -115
-  );
+  arenaGroup.add(floor);
 
-  scene.add(track);
+  for(let i=0;i<lanes;i++){
 
-  const grid =
-    new THREE.GridHelper(
-      420,
-      70,
-      0x17465a,
-      0x0b2532
-    );
+    const y =
+      (i - (lanes-1)/2) * spacing;
 
-  grid.position.y =
-    -6.8;
+    const lineGeometry =
+      new THREE.BoxGeometry(trackLength,.035,.035);
 
-  grid.position.z =
-    -105;
-
-  scene.add(grid);
-
-  for(let i=-3;i<=3;i++){
+    const lineMaterial =
+      new THREE.MeshBasicMaterial({
+        color:0x173243
+      });
 
     const line =
       new THREE.Mesh(
-        new THREE.BoxGeometry(
-          .12,
-          .08,
-          420
-        ),
-        new THREE.MeshBasicMaterial({
-          color:
-            i === 0
-              ? 0x5de7ff
-              : 0x1b4256,
-          transparent:true,
-          opacity:
-            i === 0
-              ? .55
-              : .35
-        })
+        lineGeometry,
+        lineMaterial
       );
 
-    line.position.set(
-      i * 18,
-      -6.7,
-      -115
-    );
+    line.position.set(0,y,-0.35);
 
-    scene.add(line);
-
+    arenaGroup.add(line);
   }
 
-  const gateMat =
+  for(let z=-16;z<=16;z+=2){
+
+    const geometry =
+      new THREE.BoxGeometry(.025,.025,.45);
+
+    const material =
+      new THREE.MeshBasicMaterial({
+        color:0x21475a
+      });
+
+    const marker =
+      new THREE.Mesh(
+        geometry,
+        material
+      );
+
+    marker.position.set(
+      -16,
+      -0.58,
+      z
+    );
+
+    arenaGroup.add(marker);
+  }
+}
+
+function makeRacer(symbol,index){
+  const group = new THREE.Group();
+
+  const baseColor =
+    symbol === 'RKLB'
+      ? 0xff7b39
+      : symbol === 'NKE'
+        ? 0xffffff
+        : symbol === 'NVDA'
+          ? 0x76e34a
+          : symbol === 'AMD'
+            ? 0xf24b4b
+            : symbol === 'AVGO'
+              ? 0xd46bff
+              : symbol === 'TSM'
+                ? 0x35d9ff
+                : symbol === 'MU'
+                  ? 0xffd166
+                  : 0x58a6ff;
+
+  const bodyGeometry =
+    new THREE.BoxGeometry(1.15,.42,.7);
+
+  const bodyMaterial =
     new THREE.MeshStandardMaterial({
-      color:0x123b4d,
-      emissive:0x0a8fb5,
-      emissiveIntensity:2,
-      metalness:.7
+      color:baseColor,
+      emissive:baseColor,
+      emissiveIntensity:.22,
+      metalness:.65,
+      roughness:.28
     });
 
-  [-1,1].forEach(x => {
-
-    const post =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          1.5,
-          25,
-          2
-        ),
-        gateMat
-      );
-
-    post.position.set(
-      x * 82,
-      5,
-      -300
-    );
-
-    scene.add(post);
-
-  });
-
-  const top =
+  const body =
     new THREE.Mesh(
-      new THREE.BoxGeometry(
-        165,
-        2,
-        2
-      ),
-      gateMat
+      bodyGeometry,
+      bodyMaterial
     );
 
-  top.position.set(
-    0,
-    17,
-    -300
-  );
+  group.add(body);
 
-  scene.add(top);
+  if(symbol === 'RKLB'){
 
-  const startGlow =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        165,
-        1.2
-      ),
-      new THREE.MeshBasicMaterial({
-        color:0x5de7ff,
-        transparent:true,
-        opacity:.7
-      })
-    );
+    const rocketGeometry =
+      new THREE.ConeGeometry(.27,1.25,16);
 
-  startGlow.rotation.x =
-    -Math.PI / 2;
-
-  startGlow.position.set(
-    0,
-    -6.65,
-    25
-  );
-
-  scene.add(startGlow);
-
-  const stars =
-    new THREE.BufferGeometry();
-
-  const pts = [];
-
-  for(let i=0;i<700;i++){
-
-    pts.push(
-      (Math.random()-.5)*600,
-      Math.random()*260-10,
-      -Math.random()*650
-    );
-
-  }
-
-  stars.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(
-      pts,
-      3
-    )
-  );
-
-  scene.add(
-    new THREE.Points(
-      stars,
-      new THREE.PointsMaterial({
-        color:0x8bdfff,
-        size:.7,
-        transparent:true,
-        opacity:.55
-      })
-    )
-  );
-
-  const racers = {};
-
-  function makeRacer(t){
-
-    const g =
-      new THREE.Group();
-
-    const mat =
+    const rocketMaterial =
       new THREE.MeshStandardMaterial({
-        color:
-          arenaColor[t] || 0xffffff,
-        emissive:
-          arenaColor[t] || 0xffffff,
-        emissiveIntensity:.55,
+        color:0xf1f4f8,
+        emissive:0x2d4050,
+        emissiveIntensity:.3,
         metalness:.7,
         roughness:.25
       });
 
-    if(t === 'RKLB'){
+    const rocket =
+      new THREE.Mesh(
+        rocketGeometry,
+        rocketMaterial
+      );
 
-      const body =
-        new THREE.Mesh(
-          new THREE.ConeGeometry(
-            2.8,
-            9,
-            16
-          ),
-          mat
-        );
+    rocket.rotation.z = Math.PI/2;
+    rocket.position.x = .78;
 
-      body.rotation.x =
-        Math.PI / 2;
+    group.add(rocket);
 
-      g.add(body);
+    const flameGeometry =
+      new THREE.ConeGeometry(.13,.55,12);
 
-      const glow =
-        new THREE.Mesh(
-          new THREE.SphereGeometry(
-            1.4,
-            12,
-            12
-          ),
-          new THREE.MeshBasicMaterial({
-            color:0xff7b22,
-            transparent:true,
-            opacity:.75
-          })
-        );
+    const flameMaterial =
+      new THREE.MeshBasicMaterial({
+        color:0xff7733
+      });
 
-      glow.position.z = 5;
+    const flame =
+      new THREE.Mesh(
+        flameGeometry,
+        flameMaterial
+      );
 
-      g.add(glow);
+    flame.rotation.z = -Math.PI/2;
+    flame.position.x = -.83;
 
-    } else if(t === 'NKE'){
+    group.add(flame);
+  }
 
-      const body =
-        new THREE.Mesh(
-          new THREE.CapsuleGeometry(
-            2.3,
-            5,
-            6,
-            12
-          ),
-          mat
-        );
+  if(symbol === 'NKE'){
 
-      body.rotation.x =
-        Math.PI / 2;
+    const ringGeometry =
+      new THREE.TorusGeometry(.36,.055,8,24);
 
-      g.add(body);
-
-    } else {
-
-      const body =
-        new THREE.Mesh(
-          new THREE.BoxGeometry(
-            5,
-            2.4,
-            7
-          ),
-          mat
-        );
-
-      body.position.y = 1;
-
-      g.add(body);
-
-      const core =
-        new THREE.Mesh(
-          new THREE.SphereGeometry(
-            1.5,
-            16,
-            16
-          ),
-          new THREE.MeshBasicMaterial({
-            color:
-              arenaColor[t] || 0xffffff
-          })
-        );
-
-      core.position.y = 2.4;
-
-      g.add(core);
-
-    }
+    const ringMaterial =
+      new THREE.MeshBasicMaterial({
+        color:0xffffff
+      });
 
     const ring =
       new THREE.Mesh(
-        new THREE.TorusGeometry(
-          3.8,
-          .12,
-          8,
-          32
-        ),
-        new THREE.MeshBasicMaterial({
-          color:
-            arenaColor[t] || 0xffffff,
-          transparent:true,
-          opacity:.45
-        })
+        ringGeometry,
+        ringMaterial
       );
 
-    ring.rotation.x =
-      Math.PI / 2;
+    ring.rotation.x = Math.PI/2;
 
-    ring.position.y =
-      -1.8;
-
-    g.add(ring);
-
-    scene.add(g);
-
-    return {g,ring};
-
+    group.add(ring);
   }
 
-  CONFIG.tracked.forEach(
-    t => racers[t] = makeRacer(t)
+  if(symbol === 'NVDA' || symbol === 'AMD' || symbol === 'MU'){
+
+    const coreGeometry =
+      new THREE.BoxGeometry(.42,.42,.42);
+
+    const coreMaterial =
+      new THREE.MeshBasicMaterial({
+        color:baseColor
+      });
+
+    const core =
+      new THREE.Mesh(
+        coreGeometry,
+        coreMaterial
+      );
+
+    core.position.y = .32;
+
+    group.add(core);
+  }
+
+  group.position.set(
+    -15 + index * .15,
+    0,
+    (index - (CONFIG.tracked.length-1)/2) * 1.35
   );
 
-  let drag = false;
-  let lastX = 0;
-  let targetYaw = 0;
-  let yaw = 0;
+  return group;
+}
 
-  canvas.addEventListener(
-    'pointerdown',
-    e => {
-      drag = true;
-      lastX = e.clientX;
+function createRacers(){
+  CONFIG.tracked.forEach((symbol,index)=>{
+
+    const racer =
+      makeRacer(symbol,index);
+
+    arenaGroup.add(racer);
+
+    racers[symbol] = racer;
+  });
+}
+
+function racerSpeed(move){
+  const abs = Math.abs(move);
+
+  if(abs < 1) return .15;
+  if(abs < 3) return .35;
+  if(abs < 5) return .65;
+  if(abs < 8) return 1.05;
+  return 1.55;
+}
+
+function animateThree(){
+  animationId =
+    requestAnimationFrame(animateThree);
+
+  if(!renderer || !scene || !camera){
+    return;
+  }
+
+  const ranked =
+    sortedStocks();
+
+  const maxMove =
+    ranked.length
+      ? Math.max(
+          ...ranked.map(s=>Math.abs(s.move)),
+          1
+        )
+      : 1;
+
+  CONFIG.tracked.forEach(symbol=>{
+
+    const racer = racers[symbol];
+    const stock = stocks[symbol];
+
+    if(!racer || !stock){
+      return;
     }
-  );
 
-  window.addEventListener(
-    'pointerup',
-    () => drag = false
-  );
+    const move = number(stock.move);
 
-  canvas.addEventListener(
-    'pointermove',
-    e => {
+    const targetX =
+      -15 +
+      ((move + maxMove) /
+      (maxMove * 2)) *
+      30;
 
-      if(drag){
+    racer.position.x +=
+      (targetX - racer.position.x) * .045;
 
-        targetYaw +=
-          (e.clientX - lastX) * .004;
+    const speed =
+      racerSpeed(move);
 
-        lastX = e.clientX;
+    racer.rotation.y +=
+      .004 * speed;
 
+    racer.position.y =
+      Math.sin(
+        performance.now() * .003 +
+        CONFIG.tracked.indexOf(symbol)
+      ) * .035;
+  });
+
+  arenaGroup.rotation.y +=
+    (mouseX * .035 - arenaGroup.rotation.y) * .025;
+
+  arenaGroup.rotation.x +=
+    (-mouseY * .025 - arenaGroup.rotation.x) * .025;
+
+  renderer.render(scene,camera);
+}
+
+function resizeThree(){
+  if(!renderer || !camera){
+    return;
+  }
+
+  const canvas = $('race3d');
+
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(width,height,false);
+}
+
+function dailyResetCheck(){
+  const current = sessionKey();
+
+  if(!lastSessionKey){
+    lastSessionKey = current;
+    return;
+  }
+
+  if(current !== lastSessionKey){
+
+    lastSessionKey = current;
+
+    CONFIG.tracked.forEach(symbol=>{
+      if(stocks[symbol]){
+        stocks[symbol].spark = [
+          stocks[symbol].move
+        ];
       }
+    });
 
-    }
-  );
-
-  function resize(){
-
-    const w =
-      canvas.clientWidth;
-
-    const h =
-      canvas.clientHeight;
-
-    camera.aspect =
-      w / h;
-
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(
-      w,
-      h,
-      false
-    );
-
+    renderAll();
   }
-
-  window.addEventListener(
-    'resize',
-    resize
-  );
-
-  arena3d = {
-    scene,
-    camera,
-    renderer,
-    racers,
-    targetYaw,
-    yaw
-  };
-
-  $('arenaStatus').textContent =
-    '3D ENGINE ONLINE';
-
-  function loop(){
-
-    arenaFrame =
-      requestAnimationFrame(loop);
-
-    if(!arena3d) return;
-
-    arena3d.yaw +=
-      (arena3d.targetYaw -
-       arena3d.yaw) * .08;
-
-    camera.position.x =
-      Math.sin(arena3d.yaw) * 18;
-
-    camera.position.z =
-      82 *
-      Math.cos(arena3d.yaw)
-      + 10;
-
-    camera.lookAt(
-      0,
-      0,
-      -105
-    );
-
-    CONFIG.tracked.forEach(
-      (t,i) => {
-
-        const r =
-          arena3d.racers[t];
-
-        const s =
-          data[t];
-
-        const c =
-          s?.c || 0;
-
-        const z =
-          15 -
-          clamp(
-            c * 7,
-            -35,
-            35
-          );
-
-        r.g.position.set(
-          (i - 3.5) * 18,
-          -4,
-          z - 95
-        );
-
-        r.g.rotation.z =
-          Math.sin(
-            performance.now()/700+i
-          ) * .025;
-
-        r.ring.rotation.z +=
-          .025 +
-          Math.abs(c) * .008;
-
-        const scale =
-          1 +
-          Math.min(
-            Math.abs(c),
-            10
-          ) / 18;
-
-        r.g.scale.setScalar(
-          scale
-        );
-
-        if(t === 'RKLB'){
-
-          r.g.rotation.x =
-            -.15 -
-            Math.max(c,0) * .025;
-
-        }
-
-      }
-    );
-
-    renderer.render(
-      scene,
-      camera
-    );
-
-  }
-
-  loop();
 }
 
-/* =========================================================
-   3D HUD
-   ========================================================= */
+function setupControls(){
 
-function updateArena3D(){
+  document
+    .querySelectorAll('.period')
+    .forEach(button=>{
 
-  if(!arena3d) return;
+      button.addEventListener('click',()=>{
 
-  const a =
-    Object.values(data)
-      .filter(x => x.t);
+        selectedPeriod =
+          button.dataset.period;
 
-  if(!a.length) return;
-
-  const leader =
-    [...a].sort(
-      (x,y) => y.c - x.c
-    )[0];
-
-  const avg =
-    a.reduce(
-      (x,y) => x + y.c,
-      0
-    ) / a.length;
-
-  if($('arenaLeader')){
-    $('arenaLeader').textContent =
-      leader ? leader.t : '—';
-  }
-
-  if($('arenaAvg')){
-
-    $('arenaAvg').textContent =
-      pct(avg);
-
-    $('arenaAvg').className =
-      avg >= 0 ? 'up' : 'down';
-
-  }
-
-}
-
-/* =========================================================
-   SOUND
-   ========================================================= */
-
-function beep(){
-
-  try {
-
-    const C =
-      window.AudioContext ||
-      window.webkitAudioContext;
-
-    const c = new C();
-
-    const o =
-      c.createOscillator();
-
-    const g =
-      c.createGain();
-
-    o.frequency.value =
-      520;
-
-    g.gain.value =
-      .025;
-
-    o.connect(g);
-
-    g.connect(c.destination);
-
-    o.start();
-
-    o.stop(
-      c.currentTime + .08
-    );
-
-  } catch(e) {}
-
-}
-
-/* =========================================================
-   CONTROLS
-   ========================================================= */
-
-$('move').textContent =
-  '↻ Refresh live data';
-
-$('move').onclick =
-  () => liveRefresh(true);
-
-$('reset').onclick =
-  async () => {
-
-    Object.values(data)
-      .forEach(d => {
-
-        d.hist = [0];
-        d.spark = [0];
-        d.c = 0;
+        renderPeriod();
 
       });
 
-    render();
+    });
 
-    await liveRefresh(true);
+  $('reset').addEventListener('click',()=>{
+    resetRace();
+  });
 
-  };
+  $('move').addEventListener('click',()=>{
+    fetchQuotes();
+  });
 
-$('sound').onclick =
-  () => {
+  $('sound').addEventListener('click',()=>{
 
-    soundOn =
-      !soundOn;
+    soundOn = !soundOn;
 
     $('sound').textContent =
       soundOn
-        ? '🔊 Sound on'
-        : '🔇 Sound off';
-
-  };
-
-$('close').onclick =
-  () =>
-    $('modalBack')
-      .classList
-      .remove('show');
-
-$('modalBack').onclick =
-  e => {
-
-    if(e.target.id === 'modalBack'){
-      e.currentTarget
-        .classList
-        .remove('show');
-    }
-
-  };
-
-$('dev').onclick =
-  () => {
-
-    const x =
-      $('devPanel');
-
-    x.style.display =
-      x.style.display === 'none'
-        ? 'block'
-        : 'none';
-
-  };
-
-document
-  .querySelectorAll('#periods button')
-  .forEach(b => {
-
-    b.onclick = () => {
-
-      document
-        .querySelectorAll(
-          '#periods button'
-        )
-        .forEach(x =>
-          x.classList.remove('active')
-        );
-
-      b.classList.add('active');
-
-      period =
-        b.dataset.p;
-
-      /*
-        The Worker currently supplies
-        real-time 1D data.
-        Historical periods remain
-        available in the UI and can
-        be connected later to a
-        historical data source.
-      */
-
-      $('periodNote').textContent =
-        period === '1D'
-          ? 'LIVE INTRADAY'
-          : 'PERIOD VIEW · LIVE ENGINE USES 1D DATA';
-
-      render();
-
-    };
+        ? 'SOUND ON'
+        : 'SOUND OFF';
 
   });
 
-/* =========================================================
-   BOOT
-   ========================================================= */
+  $('close').addEventListener('click',closeDetail);
+
+  $('modalBack').addEventListener('click',event=>{
+    if(event.target === $('modalBack')){
+      closeDetail();
+    }
+  });
+
+  document.addEventListener('keydown',event=>{
+    if(event.key === 'Escape'){
+      closeDetail();
+    }
+  });
+
+  $('dev').addEventListener('click',()=>{
+    $('devPanel').classList.toggle('show');
+  });
+}
+
+function updateClock(){
+  $('marketClock').textContent = formatTime();
+
+  const open = marketIsOpen();
+
+  $('marketStatus').textContent =
+    open
+      ? 'US market open • live intraday movement'
+      : 'US market closed • latest available session data';
+
+  dailyResetCheck();
+}
 
 async function boot(){
 
-  initialiseStocks();
+  try{
 
-  initArena3D();
+    initThree();
+    setupControls();
 
-  $('devPanel').innerHTML = `
+    $('devUrl').textContent =
+      'Worker: ' + CONFIG.workerUrl;
 
-    <b>LIVE ENGINE</b><br>
+    renderPeriod();
 
-    Provider:
-    Cloudflare Worker → Yahoo Finance<br>
+    $('sessionDay').textContent =
+      sessionLabel();
 
-    Worker:
-    ${CONFIG.workerUrl}<br>
+    $('marketClock').textContent =
+      formatTime();
 
-    Refresh:
-    every ${CONFIG.refreshMs/60000} minutes
-    during the US session.<br>
+    await fetchQuotes();
 
-    Watchlist:
-    ${CONFIG.tracked.join(' · ')}<br><br>
+    setInterval(
+      fetchQuotes,
+      CONFIG.refreshMs
+    );
 
-    <b>DATA MODE</b><br>
+    setInterval(
+      updateClock,
+      1000
+    );
 
-    Real intraday market data.
-    No automatic demo fallback.<br><br>
+  }catch(error){
 
-    <b>RACE ENGINE</b><br>
+    console.error('Boot error:',error);
 
-    Every racer starts at 0%.
-    Movement is calculated from
-    today's market open.
-  `;
-
-  lastRaceDay =
-    nyDateKey();
-
-  render();
-
-  await liveRefresh(false);
-
-  startPolling();
-
-  setInterval(
-    () => {
-
-      checkDailyReset();
-      marketHero();
-
-    },
-    30000
-  );
-
+    $('marketStatus').textContent =
+      'Startup error: ' + error.message;
+  }
 }
 
-/* Start */
 boot();
+</script>
 
-</script></body></html>
+</body>
+</html>
